@@ -3,17 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Connect | Minimal</title>
+    <title>Connect</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="/socket.io/socket.io.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; background: #0f172a; height: 100vh; color: white; margin:0; overflow: hidden; }
         .glass-panel { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .message-bubble { max-width: 80%; padding: 0.75rem 1rem; border-radius: 1rem; margin-bottom: 0.25rem; word-wrap: break-word; }
+        .message-bubble { max-width: 85%; padding: 0.75rem 1rem; border-radius: 1rem; margin-bottom: 0.25rem; word-wrap: break-word; font-size: 14px; }
         .message-received { background: #1e293b; color: #cbd5e1; }
         .message-sent { background: #4f46e5; color: white; align-self: flex-end; }
-        .sidebar-transition { transition: margin 0.3s ease-in-out; }
         .hidden { display: none !important; }
     </style>
 </head>
@@ -21,54 +20,46 @@
 
     <div id="auth-screen" class="w-full max-w-md p-6">
         <div class="glass-panel rounded-3xl p-8">
-            <h1 class="text-3xl font-bold text-center mb-8">Connect</h1>
+            <h1 class="text-3xl font-bold text-center mb-2">Connect</h1>
+            <p id="net-status" class="text-[10px] text-center mb-6 text-yellow-500 italic">Connecting to server...</p>
+            
             <div id="loginForm" class="space-y-4">
                 <input type="email" id="li-email" placeholder="Email" class="w-full bg-white/5 border border-white/10 px-4 py-3 rounded-xl outline-none focus:border-indigo-500">
                 <input type="password" id="li-pass" placeholder="Password" class="w-full bg-white/5 border border-white/10 px-4 py-3 rounded-xl outline-none focus:border-indigo-500">
-                <button onclick="handleAuth('login')" class="w-full py-3 bg-indigo-600 rounded-xl font-bold hover:bg-indigo-500 transition">Sign In</button>
+                <button onclick="handleAuth('login')" class="w-full py-3 bg-indigo-600 rounded-xl font-bold">Sign In</button>
                 <p class="text-center text-sm text-slate-400">New? <button onclick="toggleF('signup')" class="text-indigo-400 underline">Create account</button></p>
             </div>
+
             <div id="signupForm" class="hidden space-y-4">
                 <div class="grid grid-cols-2 gap-2">
-                    <input type="text" id="su-first" placeholder="First Name" class="bg-white/5 border border-white/10 px-4 py-3 rounded-xl outline-none">
-                    <input type="text" id="su-last" placeholder="Last Name" class="bg-white/5 border border-white/10 px-4 py-3 rounded-xl outline-none">
+                    <input type="text" id="su-first" placeholder="First" class="bg-white/5 border border-white/10 px-4 py-3 rounded-xl outline-none">
+                    <input type="text" id="su-last" placeholder="Last" class="bg-white/5 border border-white/10 px-4 py-3 rounded-xl outline-none">
                 </div>
                 <input type="email" id="su-email" placeholder="Email" class="w-full bg-white/5 border border-white/10 px-4 py-3 rounded-xl outline-none">
                 <input type="password" id="su-pass" placeholder="Password" class="w-full bg-white/5 border border-white/10 px-4 py-3 rounded-xl outline-none">
-                <button onclick="handleAuth('signup')" class="w-full py-3 bg-indigo-600 rounded-xl font-bold hover:bg-indigo-500 transition">Join Now</button>
-                <p class="text-center text-sm text-slate-400">Have account? <button onclick="toggleF('login')" class="text-indigo-400 underline">Login</button></p>
+                <button onclick="handleAuth('signup')" class="w-full py-3 bg-indigo-600 rounded-xl font-bold">Join Now</button>
+                <button onclick="toggleF('login')" class="w-full text-xs text-slate-500">Back to Login</button>
             </div>
         </div>
     </div>
 
     <div id="app-screen" class="hidden w-full h-full flex">
-        
-        <aside id="sidebar" class="sidebar-transition w-64 h-full glass-panel flex flex-col border-r border-white/10">
-            <div class="p-6 flex justify-between items-center">
-                <h2 class="font-bold text-lg">Online</h2>
-                <button onclick="toggleSidebar()" class="text-slate-500 hover:text-white">✕</button>
-            </div>
-            <div id="user-list" class="flex-1 px-6 space-y-3 overflow-y-auto"></div>
+        <aside id="sidebar" class="w-64 h-full glass-panel flex flex-col border-r border-white/10">
+            <div class="p-6 font-bold text-lg border-b border-white/5">Online</div>
+            <div id="user-list" class="flex-1 px-6 py-4 space-y-3 overflow-y-auto"></div>
             <div class="p-4 border-t border-white/10">
                 <p id="my-name" class="text-sm font-bold truncate"></p>
-                <button onclick="logout()" class="text-xs text-red-400 hover:underline">Logout</button>
+                <button onclick="logout()" class="text-xs text-red-400">Logout</button>
             </div>
         </aside>
 
         <main class="flex-1 flex flex-col h-full bg-slate-900/50">
             <header class="h-16 glass-panel px-6 flex items-center justify-between">
-                <div class="flex items-center gap-4">
-                    <button onclick="toggleSidebar()" class="p-2 hover:bg-white/5 rounded-lg">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-                    </button>
-                    <span class="font-bold"># global-chat</span>
-                </div>
-                <button onclick="requestGlobalClear()" class="text-xs font-bold text-red-400 bg-red-400/10 px-3 py-1.5 rounded-lg hover:bg-red-400/20 transition">CLEAR ALL CHAT</button>
+                <span class="font-bold"># general-chat</span>
+                <button onclick="requestGlobalClear()" class="text-[10px] font-bold text-red-400 border border-red-400/30 px-2 py-1 rounded hover:bg-red-400/10">CLEAR ALL</button>
             </header>
-
             <div id="messageDisplay" class="flex-1 overflow-y-auto p-6 flex flex-col"></div>
-
-            <div class="p-4 bg-slate-900">
+            <div class="p-4 bg-slate-900/80">
                 <form onsubmit="sendMsg(event)" class="max-w-4xl mx-auto flex gap-2 bg-white/5 border border-white/10 p-2 rounded-2xl">
                     <input type="text" id="msg-in" placeholder="Message..." class="flex-1 bg-transparent outline-none px-3">
                     <button type="submit" class="bg-indigo-600 px-4 py-2 rounded-xl font-bold">Send</button>
@@ -81,6 +72,16 @@
         const socket = io();
         let myData = null;
 
+        // Check connection status for your friend in Russia
+        socket.on('connect', () => {
+            document.getElementById('net-status').innerText = "Connected to Server ✅";
+            document.getElementById('net-status').className = "text-[10px] text-center mb-6 text-emerald-500";
+        });
+        socket.on('connect_error', () => {
+            document.getElementById('net-status').innerText = "Server Unreachable (Firewall?) ❌";
+            document.getElementById('net-status').className = "text-[10px] text-center mb-6 text-red-500";
+        });
+
         window.onload = () => {
             const saved = localStorage.getItem('connect_user');
             if(saved) { myData = JSON.parse(saved); launch(); }
@@ -91,19 +92,12 @@
             document.getElementById('signupForm').classList.toggle('hidden', v === 'login');
         }
 
-        function toggleSidebar() {
-            const sb = document.getElementById('sidebar');
-            sb.style.marginLeft = sb.style.marginLeft === "-256px" ? "0px" : "-256px";
-        }
-
         function requestGlobalClear() {
-            if(confirm("This will delete the chat history for EVERYONE. Continue?")) {
-                socket.emit('request-clear-all');
-            }
+            if(confirm("Wipe chat for everyone?")) socket.emit('request-clear-all');
         }
 
         socket.on('chat-cleared-globally', () => {
-            document.getElementById('messageDisplay').innerHTML = '<div class="text-center text-red-400 text-xs my-4 font-bold">CHAT HISTORY WAS WIPED BY AN ADMIN</div>';
+            document.getElementById('messageDisplay').innerHTML = '<div class="text-center text-red-400 text-[10px] my-4 font-bold uppercase tracking-widest">Chat history wiped</div>';
         });
 
         async function handleAuth(type) {
@@ -112,17 +106,23 @@
             const firstName = type === 'signup' ? document.getElementById('su-first').value : '';
             const lastName = type === 'signup' ? document.getElementById('su-last').value : '';
 
-            const res = await fetch('/auth', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ email, password, firstName, lastName, type })
-            });
-            const data = await res.json();
-            if(data.success) {
-                myData = data.user;
-                localStorage.setItem('connect_user', JSON.stringify(myData));
-                launch();
-            } else alert(data.message);
+            try {
+                const res = await fetch('/auth', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ email, password, firstName, lastName, type })
+                });
+                const data = await res.json();
+                if(data.success) {
+                    myData = data.user;
+                    localStorage.setItem('connect_user', JSON.stringify(myData));
+                    launch();
+                } else {
+                    alert(data.message); // This will show the real error reason
+                }
+            } catch (e) {
+                alert("The server is not responding to your request. If you are in Russia, please try a VPN.");
+            }
         }
 
         function launch() {
@@ -156,8 +156,8 @@
         socket.on('update-users', users => {
             document.getElementById('user-list').innerHTML = users.map(u => `
                 <div class="flex items-center gap-2 p-1">
-                    <div class="w-2 h-2 bg-emerald-500 rounded-full"></div>
-                    <div class="text-sm text-slate-300 font-medium">${u.firstName} ${u.lastName}</div>
+                    <div class="w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
+                    <div class="text-sm text-slate-300">${u.firstName} ${u.lastName}</div>
                 </div>
             `).join('');
         });
