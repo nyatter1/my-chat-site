@@ -5,15 +5,9 @@ const mongoose = require('mongoose');
 
 const app = express();
 const server = http.createServer(app);
-// Added heartbeat settings to keep connections alive through firewalls
-const io = new Server(server, {
-    pingTimeout: 60000,
-    cors: { origin: "*" }
-});
+const io = new Server(server);
 
-// Use a connection string with a long timeout for international users
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/connect_app';
-mongoose.connect(MONGO_URI, { serverSelectionTimeoutMS: 10000 })
+mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/connect_app')
     .then(() => console.log('✅ MongoDB Connected'))
     .catch(err => console.error('❌ DB Error:', err));
 
@@ -21,11 +15,12 @@ const UserSchema = new mongoose.Schema({
     email: { type: String, unique: true, required: true, lowercase: true },
     password: { type: String, required: true },
     firstName: String,
-    lastName: String
+    lastName: String,
+    pfp: { type: String, default: 'default.png' } // Restored PFP field
 });
 
 const MessageSchema = new mongoose.Schema({
-    user: String, text: String, email: String, timestamp: { type: Date, default: Date.now }
+    user: String, text: String, email: String, pfp: String, timestamp: { type: Date, default: Date.now }
 });
 
 const User = mongoose.model('User', UserSchema);
@@ -34,6 +29,7 @@ const Message = mongoose.model('Message', MessageSchema);
 app.use(express.static('public'));
 app.use(express.json());
 
+// --- AUTH & SETTINGS ---
 app.post('/auth', async (req, res) => {
     const { email, password, firstName, lastName, type } = req.body;
     try {
@@ -47,19 +43,26 @@ app.post('/auth', async (req, res) => {
         const user = await User.findOne({ email: cleanEmail, password });
         if (user) return res.json({ success: true, user });
         res.json({ success: false, message: "Invalid credentials." });
-    } catch (e) {
-        // Detailed error reporting for your friend
-        console.error("Auth Fail:", e.message);
-        res.json({ success: false, message: `Connection Error: ${e.message}` });
-    }
+    } catch (e) { res.json({ success: false, message: "Server Error" }); }
+});
+
+// Update Profile Route
+app.post('/update-settings', async (req, res) => {
+    const { email, firstName, lastName } = req.body;
+    try {
+        const user = await User.findOneAndUpdate(
+            { email: email.toLowerCase() },
+            { firstName, lastName },
+            { new: true }
+        );
+        res.json({ success: true, user });
+    } catch (e) { res.json({ success: false }); }
 });
 
 let onlineUsers = {};
 io.on('connection', async (socket) => {
-    try {
-        const history = await Message.find().sort({ _id: -1 }).limit(50);
-        socket.emit('load-history', history.reverse());
-    } catch (err) { console.log("History load error"); }
+    const history = await Message.find().sort({ _id: -1 }).limit(50);
+    socket.emit('load-history', history.reverse());
 
     socket.on('join-chat', (user) => {
         socket.user = user;
@@ -71,7 +74,7 @@ io.on('connection', async (socket) => {
         if (!socket.user) return;
         const msg = await Message.create({
             user: `${socket.user.firstName} ${socket.user.lastName}`,
-            text, email: socket.user.email
+            text, email: socket.user.email, pfp: socket.user.pfp || 'default.png'
         });
         io.emit('chat-msg', msg);
     });
@@ -87,4 +90,4 @@ io.on('connection', async (socket) => {
     });
 });
 
-server.listen(process.env.PORT || 3000, '0.0.0.0');
+server.listen(process.env.PORT || 3000);
