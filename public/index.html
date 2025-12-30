@@ -1,76 +1,311 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Member Chat</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TikSnap Chat</title>
     <style>
-        body { font-family: sans-serif; display: flex; justify-content: center; background: #f0f2f5; }
-        #auth-container, #chat-container { background: white; padding: 20px; border-radius: 8px; width: 350px; margin-top: 50px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .hidden { display: none; }
-        input { width: 90%; padding: 10px; margin: 5px 0; }
-        button { width: 100%; padding: 10px; cursor: pointer; background: #007bff; color: white; border: none; margin: 5px 0; }
-        #messages { height: 300px; overflow-y: auto; border: 1px solid #ddd; list-style: none; padding: 10px; margin: 10px 0; }
-        #user-list { font-size: 0.8em; color: green; margin-bottom: 10px; }
+        :root {
+            --bg-color: #1a1a2e;
+            --sidebar-bg: #16213e;
+            --accent: #0f3460;
+            --highlight: #e94560;
+            --text-color: #ecf0f1;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* --- AUTH SCREEN --- */
+        #auth-screen {
+            background: rgba(22, 33, 62, 0.9);
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            width: 350px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        h1 { margin-bottom: 20px; color: var(--highlight); }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 8px;
+            border: none;
+            background: #0f3460;
+            color: white;
+            box-sizing: border-box;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        input:focus { background: #1a1a2e; border: 1px solid var(--highlight); }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 15px;
+            border: none;
+            border-radius: 8px;
+            background: var(--highlight);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        button:hover { transform: scale(1.02); }
+        
+        .switch-link {
+            margin-top: 15px;
+            font-size: 0.9em;
+            color: #ccc;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        /* --- MAIN APP SCREEN --- */
+        #app-screen {
+            display: none; /* Hidden by default */
+            width: 100%;
+            height: 100%;
+            display: flex;
+        }
+        
+        /* Sidebar */
+        #sidebar {
+            width: 250px;
+            background: var(--sidebar-bg);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid rgba(0,0,0,0.2);
+        }
+
+        #online-users-list {
+            list-style: none;
+            padding: 0;
+            flex-grow: 1;
+        }
+
+        #online-users-list li {
+            padding: 10px;
+            margin-bottom: 5px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+        }
+
+        #online-users-list li::before {
+            content: '';
+            width: 10px;
+            height: 10px;
+            background: #2ecc71;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        /* Chat Area */
+        #chat-area {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-color);
+        }
+
+        #messages {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* Message Bubbles */
+        .message {
+            max-width: 70%;
+            padding: 10px 15px;
+            border-radius: 15px;
+            font-size: 14px;
+            line-height: 1.4;
+            position: relative;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .message strong { display: block; font-size: 0.8em; margin-bottom: 3px; opacity: 0.8; }
+
+        .message.my-message {
+            align-self: flex-end;
+            background: var(--highlight);
+            border-bottom-right-radius: 2px;
+        }
+
+        .message.other-message {
+            align-self: flex-start;
+            background: var(--accent);
+            border-bottom-left-radius: 2px;
+        }
+
+        .message.system-message {
+            align-self: center;
+            background: transparent;
+            color: #888;
+            font-size: 0.8em;
+            font-style: italic;
+        }
+
+        /* Input Area */
+        #input-area {
+            padding: 20px;
+            background: var(--sidebar-bg);
+            display: flex;
+            gap: 10px;
+        }
+
+        .hidden { display: none !important; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
-    <div id="auth-container">
-        <h2>Login / Signup</h2>
-        <input id="user-input" placeholder="Username">
-        <input id="pass-input" type="password" placeholder="Password">
-        <button onclick="auth('login')">Login</button>
-        <button style="background: #28a745" onclick="auth('signup')">Create Account</button>
+    <div id="auth-screen">
+        <h1 id="auth-title">Welcome Back</h1>
+        <input type="text" id="username" placeholder="Username" required>
+        <input type="password" id="password" placeholder="Password" required>
+        <input type="date" id="dob" class="hidden"> 
+        
+        <button id="auth-btn" onclick="handleAuth()">Login</button>
+        <div class="switch-link" onclick="toggleAuthMode()">Need an account? Sign Up</div>
+        <p id="error-msg" style="color: #ff4757; font-size: 0.9em;"></p>
     </div>
 
-    <div id="chat-container" class="hidden">
-        <div id="user-list">Online: </div>
-        <button onclick="location.reload()" style="background: #dc3545; width: auto; font-size: 10px; padding: 5px;">Logout</button>
-        <ul id="messages"></ul>
-        <input id="msg-input" placeholder="Type a message...">
-        <button onclick="sendMessage()">Send</button>
+    <div id="app-screen" class="hidden">
+        <div id="sidebar">
+            <h2 style="color: var(--highlight);">TikSnap</h2>
+            <p style="font-size: 0.8em; color: #888;">ONLINE PLAYERS</p>
+            <ul id="online-users-list">
+                </ul>
+            <button onclick="logout()" style="background: #333; margin-top: auto;">Logout</button>
+        </div>
+
+        <div id="chat-area">
+            <div id="messages"></div>
+            <div id="input-area">
+                <input type="text" id="message-input" placeholder="Type a message..." onkeypress="handleEnter(event)">
+                <button onclick="sendMessage()" style="width: 80px; margin-top: 0;">Send</button>
+            </div>
+        </div>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
-        let currentUser = "";
+        let isSignup = false;
+        let myUsername = "";
 
-        async function auth(type) {
-            const username = document.getElementById('user-input').value;
-            const password = document.getElementById('pass-input').value;
-            const res = await fetch('/auth', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ username, password, type })
-            });
-            const data = await res.json();
-            if (data.success) {
-                if (type === 'signup') alert("Account created! Now login.");
-                else {
-                    currentUser = username;
-                    document.getElementById('auth-container').classList.add('hidden');
-                    document.getElementById('chat-container').classList.remove('hidden');
-                    socket.emit('login', username);
-                }
-            } else alert(data.message);
+        // --- AUTH LOGIC ---
+        function toggleAuthMode() {
+            isSignup = !isSignup;
+            document.getElementById('auth-title').innerText = isSignup ? "Create Account" : "Welcome Back";
+            document.getElementById('auth-btn').innerText = isSignup ? "Sign Up" : "Login";
+            document.querySelector('.switch-link').innerText = isSignup ? "Have an account? Login" : "Need an account? Sign Up";
+            document.getElementById('dob').classList.toggle('hidden', !isSignup);
+            document.getElementById('error-msg').innerText = "";
         }
 
+        async function handleAuth() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const dob = document.getElementById('dob').value;
+
+            if (!username || !password) return alert("Please fill in fields");
+            if (isSignup && !dob) return alert("Please enter Date of Birth");
+
+            const response = await fetch('/auth', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    username, 
+                    password, 
+                    dob, 
+                    type: isSignup ? 'signup' : 'login' 
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                myUsername = username;
+                enterChat();
+            } else {
+                document.getElementById('error-msg').innerText = data.message;
+            }
+        }
+
+        function enterChat() {
+            document.getElementById('auth-screen').style.display = 'none';
+            document.getElementById('app-screen').classList.remove('hidden');
+            socket.emit('join-chat', myUsername);
+        }
+
+        function logout() {
+            location.reload();
+        }
+
+        // --- CHAT LOGIC ---
         function sendMessage() {
-            const input = document.getElementById('msg-input');
-            if (input.value) {
-                socket.emit('chat-message', input.value);
+            const input = document.getElementById('message-input');
+            const text = input.value.trim();
+            if (text) {
+                socket.emit('chat-message', text);
                 input.value = '';
             }
         }
 
-        socket.on('chat-message', d => {
-            const li = document.createElement('li');
-            li.innerHTML = `<strong>${d.user}:</strong> ${d.text}`;
-            document.getElementById('messages').appendChild(li);
+        function handleEnter(e) {
+            if (e.key === 'Enter') sendMessage();
+        }
+
+        socket.on('chat-message', (data) => {
+            const box = document.getElementById('messages');
+            const div = document.createElement('div');
+            
+            if (data.type === 'system') {
+                div.className = 'message system-message';
+                div.innerText = data.text;
+            } else {
+                const isMe = data.user === myUsername;
+                div.className = `message ${isMe ? 'my-message' : 'other-message'}`;
+                div.innerHTML = `<strong>${data.user}</strong>${data.text}`;
+            }
+            
+            box.appendChild(div);
+            box.scrollTop = box.scrollHeight;
         });
 
-        socket.on('update-users', list => {
-            document.getElementById('user-list').innerText = "Online: " + list.join(', ');
+        socket.on('update-user-list', (users) => {
+            const list = document.getElementById('online-users-list');
+            list.innerHTML = "";
+            users.forEach(u => {
+                const li = document.createElement('li');
+                li.innerText = u;
+                list.appendChild(li);
+            });
         });
     </script>
 </body>
