@@ -6,6 +6,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
+// MongoDB Connection
 mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log('TikSnap DB Connected'))
     .catch(err => console.error('DB Error:', err));
@@ -15,7 +16,7 @@ const UserSchema = new mongoose.Schema({
     password: { type: String, required: true },
     profilePic: { type: String, default: 'https://cdn-icons-png.flaticon.com/512/149/149071.png' },
     banner: { type: String, default: '#00a8ff' },
-    bio: { type: String, default: 'Click to set a bio...' }
+    bio: { type: String, default: 'Click to edit your bio...' }
 });
 
 const MessageSchema = new mongoose.Schema({
@@ -26,30 +27,31 @@ const User = mongoose.model('User', UserSchema);
 const Message = mongoose.model('Message', MessageSchema);
 
 app.use(express.static('public'));
-app.use(express.json({ limit: '15mb' }));
+app.use(express.json({ limit: '20mb' })); // Higher limit for high-res banners
 
 app.post('/auth', async (req, res) => {
     const { username, password, type } = req.body;
-    if (type === 'signup') {
-        const existing = await User.findOne({ username });
-        if (existing) return res.json({ success: false, message: "Username taken" });
-        const user = await User.create({ username, password });
-        return res.json({ success: true, user });
-    } 
-    const user = await User.findOne({ username, password });
-    if (user) return res.json({ success: true, user });
-    res.json({ success: false, message: "Invalid Login" });
+    try {
+        if (type === 'signup') {
+            const existing = await User.findOne({ username });
+            if (existing) return res.json({ success: false, message: "Taken" });
+            const user = await User.create({ username, password });
+            return res.json({ success: true, user });
+        } 
+        const user = await User.findOne({ username, password });
+        if (user) return res.json({ success: true, user });
+        res.json({ success: false, message: "Invalid Credentials" });
+    } catch (e) { res.json({ success: false }); }
 });
 
 app.post('/update-profile', async (req, res) => {
     const { username, field, value } = req.body;
     const user = await User.findOneAndUpdate({ username }, { [field]: value }, { new: true });
-    // Broadcast update to all users
-    io.emit('user-profile-updated', user);
+    io.emit('user-update', user); // Tell everyone to update this user's PFP/Banner in their UI
     res.json({ success: true, user });
 });
 
-let onlineUsers = {}; 
+let onlineUsers = {};
 io.on('connection', async (socket) => {
     const history = await Message.find().sort({ _id: -1 }).limit(50);
     socket.emit('load-history', history.reverse());
