@@ -2,110 +2,96 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>TikSnap | GroupZone Edition</title>
+    <title>TikSnap Elite</title>
     <style>
-        :root {
-            --bg: #0b0e11;
-            --card: #15191c;
-            --accent: #00a8ff;
-            --text: #ffffff;
-            --border: rgba(255,255,255,0.08);
-        }
-        body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; }
+        :root { --bg: #0b0e11; --card: #15191c; --accent: #00a8ff; --text: #ffffff; --border: rgba(255,255,255,0.08); }
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; }
         
-        /* Glass Login */
-        #auth-screen {
-            display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh;
-            background: radial-gradient(circle at top right, #1e272e, #0b0e11);
-        }
-        .auth-card {
-            background: var(--card); padding: 40px; border-radius: 20px; border: 1px solid var(--border);
-            width: 380px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-        }
-        input {
-            width: 100%; padding: 14px; margin: 10px 0; border-radius: 10px; border: 1px solid var(--border);
-            background: #1c2126; color: white; outline: none; box-sizing: border-box;
-        }
-        .btn-primary {
-            width: 100%; padding: 14px; background: var(--accent); color: white; border: none;
-            border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px;
-        }
-        .btn-primary:hover { opacity: 0.8; transform: translateY(-2px); }
-
-        /* Main App Layout */
-        #app-screen { display: none; height: 100vh; width: 100vw; }
-        
-        .sidebar {
-            width: 280px; background: var(--card); border-right: 1px solid var(--border);
-            display: flex; flex-direction: column; padding: 20px;
-        }
-        .chat-main { flex-grow: 1; display: flex; flex-direction: column; position: relative; }
-        
-        /* Message Area */
-        #messages { flex-grow: 1; padding: 25px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
-        .msg-bubble { display: flex; align-items: flex-start; gap: 12px; max-width: 80%; }
-        .pfp-small { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent); }
-        .msg-content { background: #22272b; padding: 12px 16px; border-radius: 15px; font-size: 14px; line-height: 1.5; }
-        .msg-content strong { color: var(--accent); display: block; margin-bottom: 4px; font-size: 12px; }
-
-        /* Online List */
-        .user-item { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 10px; transition: 0.2s; }
-        .user-item:hover { background: rgba(255,255,255,0.05); }
-        .online-dot { width: 8px; height: 8px; background: #00ff88; border-radius: 50%; box-shadow: 0 0 10px #00ff88; }
-
-        #input-container { padding: 20px; background: var(--bg); border-top: 1px solid var(--border); display: flex; gap: 10px; }
+        /* Auth Screen */
+        #auth-screen { display: flex; align-items: center; justify-content: center; height: 100vh; }
+        .auth-card { background: var(--card); padding: 40px; border-radius: 20px; border: 1px solid var(--border); width: 350px; text-align: center; }
+        input { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid var(--border); background: #1c2126; color: white; box-sizing: border-box; }
+        .btn-primary { width: 100%; padding: 12px; background: var(--accent); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
         .hidden { display: none !important; }
+
+        /* Main UI */
+        #app-screen { display: none; height: 100vh; width: 100vw; display: flex; }
+        .sidebar { width: 260px; background: var(--card); border-right: 1px solid var(--border); padding: 20px; display: flex; flex-direction: column; }
+        .chat-main { flex-grow: 1; display: flex; flex-direction: column; }
+        #messages { flex-grow: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+        .msg-bubble { display: flex; gap: 10px; }
+        .pfp-small { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; }
+        .msg-content { background: #1c2126; padding: 10px 14px; border-radius: 12px; font-size: 14px; }
+        .msg-content b { color: var(--accent); font-size: 11px; display: block; }
+
+        /* Modal */
+        #profile-modal { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:999; display:none; align-items:center; justify-content:center; }
+        .modal-content { background: var(--card); width: 380px; border-radius: 20px; overflow: hidden; border: 1px solid var(--border); position: relative; }
+        #v-banner { height: 120px; background: var(--accent); cursor: pointer; background-size: cover; background-position: center; }
+        #v-pfp { width: 90px; height: 90px; border-radius: 50%; border: 4px solid var(--card); margin-top: -45px; object-fit: cover; cursor: pointer; }
+        .user-item { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 8px; cursor: pointer; }
+        .user-item:hover { background: rgba(255,255,255,0.05); }
     </style>
 </head>
 <body>
 
     <div id="auth-screen">
         <div class="auth-card">
-            <img src="https://i.imgur.com/8mX1m08.png" width="80" style="margin-bottom: 20px;">
-            <h2 id="title">TikSnap Portal</h2>
+            <h2 id="auth-title">TikSnap</h2>
             <input type="text" id="user" placeholder="Username">
             <input type="password" id="pass" placeholder="Password">
-            
-            <div id="signup-fields" class="hidden">
-                <input type="email" id="email" placeholder="Email Address">
+            <div id="signup-extra" class="hidden">
+                <input type="email" id="email" placeholder="Email">
                 <input type="date" id="dob">
-                <input type="text" id="pfp" placeholder="Profile Pic URL (Link)">
             </div>
-
-            <button class="btn-primary" id="main-btn" onclick="handleAuth()">Login</button>
-            <p style="font-size: 12px; color: #888; cursor: pointer; margin-top: 15px;" id="toggle-link" onclick="toggleMode()">New here? Create Account</p>
+            <button class="btn-primary" id="auth-btn" onclick="handleAuth()">Login</button>
+            <p onclick="toggleAuth()" style="font-size: 12px; color: #888; cursor: pointer; margin-top: 15px;">Change Mode</p>
         </div>
     </div>
 
-    <div id="app-screen">
+    <div id="app-screen" class="hidden">
         <div class="sidebar">
-            <h3 style="color: var(--accent);">TikSnap</h3>
-            <p style="font-size: 11px; letter-spacing: 1px; color: #555; margin-bottom: 20px;">ONLINE MEMBERS</p>
-            <div id="online-list"></div>
-            <button onclick="location.reload()" style="background:transparent; color:#888; border:none; margin-top:auto; cursor:pointer;">Logout</button>
+            <h3 style="color: var(--accent)">TikSnap</h3>
+            <div id="online-list" style="flex-grow: 1;"></div>
+            <button onclick="logout()" class="btn-primary" style="background:#333">Logout</button>
         </div>
-
         <div class="chat-main">
             <div id="messages"></div>
-            <div id="input-container">
-                <input type="text" id="msg-in" placeholder="Write a message..." onkeypress="if(event.key==='Enter')send()">
-                <button class="btn-primary" style="width: 100px; margin-top: 0;" onclick="send()">Send</button>
+            <div style="padding: 20px; display: flex; gap: 10px;">
+                <input type="text" id="msg-in" placeholder="Say something..." style="margin:0" onkeypress="if(event.key==='Enter')send()">
+                <button class="btn-primary" onclick="send()" style="width:80px; margin:0">Send</button>
             </div>
         </div>
+    </div>
+
+    <div id="profile-modal">
+        <div class="modal-content">
+            <div id="v-banner" title="Click to change banner"></div>
+            <div style="text-align: center; padding-bottom: 20px;">
+                <img id="v-pfp" src="" title="Click to change PFP">
+                <h2 id="v-username"></h2>
+                <p id="v-bio" style="color:#888; font-size:14px; padding: 0 20px;"></p>
+                <button class="btn-primary" style="width: 100px" onclick="closeModal()">Close</button>
+            </div>
+        </div>
+        <input type="file" id="pfp-up" class="hidden" accept="image/*">
+        <input type="file" id="banner-up" class="hidden" accept="image/*">
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
-        let isSignup = false;
-        let myData = null;
+        let isSignup = false, myData = null;
 
-        function toggleMode() {
+        window.onload = () => {
+            const saved = localStorage.getItem('tiksnap_user');
+            if(saved) { myData = JSON.parse(saved); startApp(); }
+        }
+
+        function toggleAuth() {
             isSignup = !isSignup;
-            document.getElementById('signup-fields').classList.toggle('hidden', !isSignup);
-            document.getElementById('title').innerText = isSignup ? "Create TikSnap ID" : "TikSnap Portal";
-            document.getElementById('main-btn').innerText = isSignup ? "Sign Up" : "Login";
-            document.getElementById('toggle-link').innerText = isSignup ? "Already have an account? Login" : "New here? Create Account";
+            document.getElementById('signup-extra').classList.toggle('hidden', !isSignup);
+            document.getElementById('auth-btn').innerText = isSignup ? "Sign Up" : "Login";
         }
 
         async function handleAuth() {
@@ -113,58 +99,91 @@
             const password = document.getElementById('pass').value;
             const email = document.getElementById('email').value;
             const dob = document.getElementById('dob').value;
-            const pfp = document.getElementById('pfp').value;
 
             const res = await fetch('/auth', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ username, password, email, dob, pfp, type: isSignup?'signup':'login' })
+                body: JSON.stringify({ username, password, email, dob, type: isSignup?'signup':'login' })
             });
             const data = await res.json();
             if(data.success) {
                 myData = data.user;
-                document.getElementById('auth-screen').classList.add('hidden');
-                document.getElementById('app-screen').style.display = 'flex';
-                socket.emit('join-chat', myData);
+                localStorage.setItem('tiksnap_user', JSON.stringify(myData));
+                startApp();
             } else alert(data.message);
         }
 
-        function send() {
-            const input = document.getElementById('msg-in');
-            if(input.value) { socket.emit('chat-message', input.value); input.value = ''; }
+        function startApp() {
+            document.getElementById('auth-screen').classList.add('hidden');
+            document.getElementById('app-screen').classList.remove('hidden');
+            socket.emit('join-chat', myData);
         }
 
-        socket.on('load-history', (msgs) => {
-            msgs.forEach(m => addMessage(m));
-        });
+        function logout() { localStorage.removeItem('tiksnap_user'); location.reload(); }
 
-        socket.on('chat-message', (m) => addMessage(m));
+        function send() {
+            const i = document.getElementById('msg-in');
+            if(i.value) { socket.emit('chat-message', i.value); i.value = ''; }
+        }
 
-        function addMessage(m) {
-            const container = document.getElementById('messages');
+        socket.on('chat-message', m => addMsg(m));
+        socket.on('load-history', msgs => msgs.forEach(m => addMsg(m)));
+
+        function addMsg(m) {
             const div = document.createElement('div');
             div.className = 'msg-bubble';
-            div.innerHTML = `
-                <img src="${m.pfp}" class="pfp-small">
-                <div class="msg-content">
-                    <strong>${m.user}</strong>
-                    ${m.text}
-                </div>
-            `;
-            container.appendChild(div);
-            container.scrollTop = container.scrollHeight;
+            div.innerHTML = `<img src="${m.pfp}" class="pfp-small"><div class="msg-content"><b>${m.user}</b>${m.text}</div>`;
+            const box = document.getElementById('messages');
+            box.appendChild(div);
+            box.scrollTop = box.scrollHeight;
         }
 
-        socket.on('update-user-list', (users) => {
+        socket.on('update-user-list', users => {
             const list = document.getElementById('online-list');
             list.innerHTML = '';
             users.forEach(u => {
                 const item = document.createElement('div');
                 item.className = 'user-item';
-                item.innerHTML = `<img src="${u.profilePic}" class="pfp-small" style="width:25px; height:25px;"> <span style="font-size:13px;">${u.username}</span> <div class="online-dot" style="margin-left:auto;"></div>`;
+                item.onclick = () => showProfile(u);
+                item.innerHTML = `<img src="${u.profilePic}" class="pfp-small" style="width:25px; height:25px"> <span>${u.username}</span>`;
                 list.appendChild(item);
             });
         });
+
+        function showProfile(u) {
+            document.getElementById('v-username').innerText = u.username;
+            document.getElementById('v-pfp').src = u.profilePic;
+            document.getElementById('v-banner').style.background = u.banner.startsWith('data') ? `url(${u.banner}) center/cover` : u.banner;
+            document.getElementById('v-bio').innerText = u.bio;
+            document.getElementById('profile-modal').style.display = 'flex';
+
+            if(u.username === myData.username) {
+                document.getElementById('v-pfp').onclick = () => document.getElementById('pfp-up').click();
+                document.getElementById('v-banner').onclick = () => document.getElementById('banner-up').click();
+            } else {
+                document.getElementById('v-pfp').onclick = null;
+                document.getElementById('v-banner').onclick = null;
+            }
+        }
+
+        function closeModal() { document.getElementById('profile-modal').style.display = 'none'; }
+
+        async function upload(file, field) {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = async () => {
+                const res = await fetch('/update-profile', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ username: myData.username, field, value: reader.result })
+                });
+                const d = await res.json();
+                if(d.success) { myData = d.user; localStorage.setItem('tiksnap_user', JSON.stringify(myData)); location.reload(); }
+            };
+        }
+
+        document.getElementById('pfp-up').onchange = (e) => upload(e.target.files[0], 'profilePic');
+        document.getElementById('banner-up').onchange = (e) => upload(e.target.files[0], 'banner');
     </script>
 </body>
 </html>
