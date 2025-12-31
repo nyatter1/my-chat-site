@@ -3,165 +3,217 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nyatter / Home Global</title>
+    <title>Nyatter / The Global Grid</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
     <style>
         :root {
-            --glass: rgba(15, 23, 42, 0.75);
-            --border: rgba(255, 255, 255, 0.08);
-            --accent: #6366f1;
+            --glass-bg: rgba(10, 10, 20, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --accent-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
         }
 
         body { 
-            font-family: 'Plus Jakarta Sans', sans-serif; 
-            background: radial-gradient(circle at top right, #1e293b, #020617); 
+            font-family: 'Outfit', sans-serif; 
+            background: #020617; 
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%), 
+                radial-gradient(at 100% 0%, rgba(168, 85, 247, 0.15) 0px, transparent 50%);
             color: #f8fafc; 
             height: 100vh; 
             overflow: hidden; 
         }
 
-        /* Glassmorphism Effects */
-        .glass { background: var(--glass); backdrop-filter: blur(20px); border: 1px solid var(--border); }
-        .sidebar-border { border-right: 1px solid var(--border); }
-        .feed-border { border-right: 1px solid var(--border); border-left: 1px solid var(--border); }
+        /* --- UI UTILITIES --- */
+        .glass-panel { 
+            background: var(--glass-bg); 
+            backdrop-filter: blur(24px); 
+            border: 1px solid var(--glass-border); 
+        }
         
         .rainbow-text { 
-            background: linear-gradient(90deg, #ff4d4d, #f97316, #fbbf24, #4ade80, #60a5fa, #a855f7); 
+            background: linear-gradient(to right, #ff4d4d, #f97316, #fbbf24, #4ade80, #60a5fa, #a855f7); 
             -webkit-background-clip: text; 
             -webkit-text-fill-color: transparent; 
-            font-weight: 800; 
+            font-weight: 900; 
+            letter-spacing: -1px;
         }
 
-        .custom-scroll::-webkit-scrollbar { width: 4px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+        .custom-scroll::-webkit-scrollbar { width: 5px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
 
-        /* Component Styling */
-        .meow-btn { 
-            background: linear-gradient(135deg, #6366f1, #a855f7); 
-            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3); 
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        /* --- ANIMATIONS & INTERACTIONS --- */
+        .btn-primary { 
+            background: var(--accent-gradient); 
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.3); 
+            transition: all 0.2s ease;
         }
-        .meow-btn:hover { transform: translateY(-1px); filter: brightness(1.1); }
-        .meow-btn:active { transform: translateY(1px); }
+        .btn-primary:hover { transform: scale(1.02); box-shadow: 0 0 30px rgba(99, 102, 241, 0.5); }
+        .btn-primary:active { transform: scale(0.98); }
 
-        .post-card { transition: all 0.3s ease; border-bottom: 1px solid var(--border); }
-        .post-card:hover { background: rgba(255, 255, 255, 0.02); }
+        .input-field {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--glass-border);
+            transition: all 0.3s;
+        }
+        .input-field:focus { border-color: #6366f1; box-shadow: 0 0 15px rgba(99, 102, 241, 0.2); }
 
-        .my-tag { background: rgba(251, 191, 36, 0.1); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.2); padding: 0 4px; border-radius: 4px; font-weight: 600; }
-        .other-tag { color: #818cf8; font-weight: 600; }
+        /* --- SPECIFIC COMPONENTS --- */
+        .post-card { border-bottom: 1px solid var(--glass-border); transition: background 0.2s; }
+        .post-card:hover { background: rgba(255,255,255,0.02); }
+
+        .my-tag { background: rgba(251, 191, 36, 0.15); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.3); padding: 1px 6px; border-radius: 6px; }
+        .other-tag { color: #818cf8; font-weight: 700; }
         
-        .notif-dot { position: absolute; top: 0; right: 0; width: 10px; height: 10px; background: #ef4444; border-radius: 50%; border: 2px solid #020617; display: none; }
+        .notif-badge { position: absolute; top: -2px; right: -2px; width: 10px; height: 10px; background: #ef4444; border-radius: 50%; border: 2px solid #0f172a; display: none; box-shadow: 0 0 10px #ef4444; }
+
+        .modal-overlay { background: rgba(2, 6, 23, 0.85); backdrop-filter: blur(12px); }
         
-        .dev-badge { background: linear-gradient(to right, #6366f1, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; border: 1px solid #6366f1; padding: 1px 6px; border-radius: 6px; font-size: 10px; font-weight: 800; text-transform: uppercase; }
-        
-        #preview-area img { max-height: 200px; border-radius: 12px; margin-top: 10px; border: 2px solid var(--accent); }
+        /* PFP Styles */
+        .pfp-preview { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px dashed rgba(255,255,255,0.2); }
+        .user-avatar { object-fit: cover; background: #1e293b; }
     </style>
 </head>
-<body class="flex justify-center">
+<body class="flex justify-center text-sm sm:text-base">
 
-    <div id="auth-ui" class="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-950 px-4">
-        <div class="w-full max-w-[420px] glass p-10 rounded-[2.5rem] shadow-2xl">
-            <div class="text-center mb-10">
-                <h1 class="text-4xl font-black tracking-tighter mb-2">NYATTER</h1>
-                <p class="text-slate-400 text-sm">Welcome back to the grid.</p>
+    <div id="auth-ui" class="fixed inset-0 z-[500] flex items-center justify-center p-4">
+        <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-500/20 rounded-full blur-[100px]"></div>
+        <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-[100px]"></div>
+
+        <div class="relative w-full max-w-[420px] glass-panel p-8 rounded-[2rem] shadow-2xl flex flex-col">
+            <div class="text-center mb-8">
+                <h1 class="text-5xl mb-2 rainbow-text">NYATTER</h1>
+                <p class="text-slate-400 font-light tracking-widest uppercase text-xs">Join the Frequency</p>
+            </div>
+
+            <div id="login-section" class="space-y-4 animate-fade-in">
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-slate-500 uppercase ml-2">Identity</label>
+                    <input type="text" id="login-id" placeholder="Username or Email" class="w-full p-4 rounded-xl outline-none input-field text-white">
+                </div>
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-slate-500 uppercase ml-2">Passcode</label>
+                    <input type="password" id="login-pass" placeholder="Password" class="w-full p-4 rounded-xl outline-none input-field text-white">
+                </div>
+                <button onclick="performLogin()" class="w-full py-4 mt-4 btn-primary rounded-xl font-bold text-white uppercase tracking-widest text-sm">Initialize Session</button>
+                <div class="text-center mt-6">
+                    <p class="text-slate-500">No signal found? <button onclick="toggleAuthMode()" class="text-indigo-400 font-bold hover:underline">Establish Uplink (Signup)</button></p>
+                </div>
+            </div>
+
+            <div id="signup-section" class="hidden space-y-4 animate-fade-in">
+                <div class="flex justify-center mb-4">
+                    <label class="cursor-pointer group relative">
+                        <img id="signup-pfp-preview" src="https://via.placeholder.com/150/333?text=+" class="pfp-preview transition-all group-hover:border-indigo-500">
+                        <input type="file" id="signup-pfp-input" class="hidden" accept="image/*" onchange="previewSignupPfp(event)">
+                        <div class="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-bold uppercase">Upload</div>
+                    </label>
+                </div>
+                
+                <div class="grid grid-cols-1 gap-3">
+                    <input type="text" id="reg-user" placeholder="Create Username" class="w-full p-3 rounded-xl outline-none input-field text-white">
+                    <input type="email" id="reg-email" placeholder="Email Address" class="w-full p-3 rounded-xl outline-none input-field text-white">
+                    <input type="password" id="reg-pass" placeholder="Create Password" class="w-full p-3 rounded-xl outline-none input-field text-white">
+                </div>
+
+                <button onclick="performSignup()" class="w-full py-4 btn-primary rounded-xl font-bold text-white uppercase tracking-widest text-sm">Create Identity</button>
+                <div class="text-center mt-4">
+                    <p class="text-slate-500">Already registered? <button onclick="toggleAuthMode()" class="text-indigo-400 font-bold hover:underline">Access Login</button></p>
+                </div>
             </div>
             
-            <div id="login-form" class="space-y-4">
-                <input type="text" id="log-u" placeholder="Username" class="w-full p-4 bg-slate-900/50 rounded-2xl outline-none border border-white/5 focus:border-indigo-500 transition-all">
-                <button onclick="auth('login')" class="w-full py-4 meow-btn rounded-2xl font-bold text-white uppercase tracking-widest">Connect</button>
-                <p class="text-center text-sm text-slate-500">First time? <button onclick="toggleAuth()" class="text-indigo-400 font-bold">Create Account</button></p>
-            </div>
+            <div id="auth-error" class="hidden mt-4 p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-red-200 text-xs text-center font-bold"></div>
+        </div>
+    </div>
 
-            <div id="signup-form" class="hidden space-y-4">
-                <input type="text" id="reg-u" placeholder="Choose Username" class="w-full p-4 bg-slate-900/50 rounded-2xl outline-none border border-white/5 focus:border-indigo-500 transition-all">
-                <button onclick="auth('signup')" class="w-full py-4 meow-btn rounded-2xl font-bold text-white uppercase tracking-widest">Register</button>
-                <p class="text-center text-sm text-slate-500">Already a member? <button onclick="toggleAuth()" class="text-indigo-400 font-bold">Login</button></p>
+    <div id="notif-overlay" class="fixed inset-0 z-[400] hidden modal-overlay flex items-center justify-center">
+        <div class="w-full max-w-md bg-slate-900 border border-indigo-500/30 p-6 rounded-3xl shadow-[0_0_50px_rgba(99,102,241,0.2)] relative transform scale-100 transition-transform">
+            <button onclick="toggleNotifs()" class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center bg-white/5 rounded-full hover:bg-red-500/20 text-slate-400 hover:text-red-500 transition-colors">✕</button>
+            
+            <h2 class="text-2xl font-bold mb-6 flex items-center gap-3">
+                <span class="text-3xl">🔔</span> Incoming Alerts
+            </h2>
+            
+            <div id="notif-list" class="max-h-[60vh] overflow-y-auto custom-scroll space-y-2 pr-2">
+                </div>
+            
+            <div class="mt-6 pt-4 border-t border-white/5 text-center">
+                <p class="text-[10px] text-slate-500 uppercase tracking-widest">End of Transmission</p>
             </div>
         </div>
     </div>
 
-    <div id="app-ui" class="hidden w-full max-w-[1440px] flex h-screen relative">
+    <div id="app-ui" class="hidden w-full max-w-[1500px] flex h-screen relative">
         
-        <aside class="w-[300px] flex flex-col p-6 sidebar-border">
-            <div class="mb-10 px-4"><span class="text-3xl font-black rainbow-text">NYATTER</span></div>
+        <aside class="w-[280px] flex flex-col p-6 border-r border-white/5 bg-slate-900/40 backdrop-blur-sm">
+            <div class="mb-12 px-2"><span class="text-2xl rainbow-text">NYATTER</span></div>
             
-            <nav class="flex-1 space-y-2">
-                <div class="flex items-center gap-4 px-6 py-4 text-lg font-bold text-white bg-indigo-500/10 rounded-2xl border border-indigo-500/20 cursor-pointer">
-                    <span>🏠</span> Home
+            <nav class="flex-1 space-y-4">
+                <div class="group flex items-center gap-4 px-4 py-3 text-lg font-bold text-white bg-indigo-600/20 rounded-2xl border border-indigo-500/30 cursor-pointer transition-all">
+                    <span class="group-hover:scale-110 transition-transform">🏠</span> <span class="tracking-wide">Home Base</span>
                 </div>
-                <div onclick="toggleNotifPanel()" class="relative flex items-center gap-4 px-6 py-4 text-lg font-bold text-slate-400 hover:text-white hover:bg-white/5 rounded-2xl transition-all cursor-pointer">
-                    <span>🔔</span> Notifications
-                    <div id="notif-dot"></div>
+                <div onclick="toggleNotifs()" class="group flex items-center gap-4 px-4 py-3 text-lg font-bold text-slate-400 hover:text-white hover:bg-white/5 rounded-2xl transition-all cursor-pointer relative">
+                    <span class="group-hover:scale-110 transition-transform">🔔</span> Alerts
+                    <div id="notif-dot" class="notif-badge"></div>
                 </div>
             </nav>
 
-            <div id="notif-panel" class="hidden absolute top-32 left-8 w-[280px] glass rounded-3xl p-4 shadow-2xl z-50">
-                <h3 class="text-xs font-black text-slate-500 uppercase tracking-widest mb-4">Signal Alerts</h3>
-                <div id="notif-list" class="space-y-2"></div>
-            </div>
-
-            <div class="mt-auto p-4 glass rounded-[2rem] border border-white/5">
+            <div class="mt-auto p-4 bg-black/20 rounded-2xl border border-white/5">
                 <div class="flex items-center gap-3">
-                    <img src="default.png" class="w-10 h-10 rounded-full bg-slate-800">
+                    <img id="current-user-pfp" src="default.png" class="w-10 h-10 rounded-full user-avatar border border-white/10">
                     <div class="overflow-hidden">
-                        <p class="font-bold text-sm truncate" id="user-display"></p>
-                        <div id="dev-tag" class="hidden"><span class="dev-badge">Core Dev</span></div>
+                        <p class="font-bold text-sm truncate text-white" id="user-display"></p>
+                        <div id="dev-tag" class="hidden"><span class="text-[10px] bg-indigo-500 text-white px-2 rounded-full font-bold">DEV</span></div>
                     </div>
                 </div>
-                <button onclick="logout()" class="w-full mt-4 py-2 text-xs font-bold text-red-400/60 hover:text-red-400 transition-colors uppercase tracking-widest">Disconnect</button>
+                <button onclick="logout()" class="w-full mt-3 py-2 text-[10px] font-bold text-red-400 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-colors uppercase tracking-widest">Terminate Signal</button>
             </div>
         </aside>
 
-        <main class="flex-1 flex flex-col glass feed-border h-full">
-            <header class="p-6 border-b border-white/5 flex justify-between items-center bg-slate-950/20 backdrop-blur-md">
-                <h2 class="text-xl font-black">GLOBAL STREAM</h2>
-                <div class="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase">
-                    <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                    Satellite Active
+        <main class="flex-1 flex flex-col glass-panel border-y-0 h-full relative z-10">
+            <header class="p-6 border-b border-white/5 bg-slate-900/80 backdrop-blur-xl sticky top-0 z-20 flex justify-between items-center">
+                <h2 class="text-xl font-bold tracking-tight">Global Feed</h2>
+                <div class="flex items-center gap-2 text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
+                    <div class="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></div>
+                    LIVE
                 </div>
             </header>
 
             <div class="flex-1 overflow-y-auto custom-scroll" id="feed-scroll">
-                <div class="p-6 border-b border-white/5 bg-white/[0.01]">
-                    <div class="flex gap-5">
-                        <img src="default.png" class="w-14 h-14 rounded-full bg-slate-800 shrink-0">
+                <div class="p-6 border-b border-white/5 bg-gradient-to-b from-indigo-500/5 to-transparent">
+                    <div class="flex gap-4">
+                        <img id="composer-pfp" src="default.png" class="w-12 h-12 rounded-full user-avatar shadow-lg">
                         <div class="flex-1">
-                            <textarea id="post-input" placeholder="Broadcast your thoughts to the world..." class="w-full bg-transparent text-xl outline-none resize-none h-24 pt-2 text-white placeholder-slate-600 font-medium"></textarea>
-                            <div id="preview-area"></div>
+                            <textarea id="post-input" placeholder="What is happening in your sector?" class="w-full bg-transparent text-lg outline-none resize-none h-20 pt-2 text-white placeholder-slate-500"></textarea>
+                            <div id="preview-area" class="mb-4"></div>
                             
-                            <div class="flex justify-between items-center mt-4 pt-4 border-t border-white/5">
-                                <div class="flex gap-4">
-                                    <label class="cursor-pointer p-2 hover:bg-white/5 rounded-xl transition-all text-xl">
-                                        🖼️<input type="file" class="hidden" accept="image/*" onchange="previewImage(event)">
-                                    </label>
-                                    <button class="p-2 hover:bg-white/5 rounded-xl transition-all text-xl">😃</button>
-                                </div>
-                                <button onclick="sendPost()" class="px-10 py-3 meow-btn rounded-full font-black text-white uppercase text-sm tracking-widest">Transmit</button>
+                            <div class="flex justify-between items-center pt-2">
+                                <label class="cursor-pointer text-xl p-2 hover:bg-white/10 rounded-full transition-colors text-indigo-400">
+                                    🖼️<input type="file" class="hidden" accept="image/*" onchange="previewPostImage(event)">
+                                </label>
+                                <button onclick="sendPost()" class="px-8 py-2 btn-primary rounded-full font-bold text-white text-xs uppercase tracking-widest">Broadcast</button>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div id="feed-container" class="divide-y divide-white/5"></div>
-            </div>
+                <div id="feed-container"></div>
+                <div class="h-20"></div> </div>
         </main>
 
-        <aside class="w-[350px] p-8 space-y-8 h-full overflow-y-auto custom-scroll">
-            <div class="glass p-6 rounded-[2rem] border-white/5">
+        <aside class="w-[320px] p-6 border-l border-white/5 bg-slate-900/40 backdrop-blur-sm hidden lg:block">
+            <div class="glass-panel p-6 rounded-3xl h-full flex flex-col">
                 <h3 class="text-xs font-black text-slate-500 uppercase tracking-widest mb-6 flex items-center gap-2">
                     <span class="w-2 h-2 bg-indigo-500 rounded-full"></span>
-                    Active Users
+                    Citizens
                 </h3>
-                <div id="user-list" class="space-y-4"></div>
-            </div>
-
-            <div class="p-6">
-                <p class="text-[10px] text-slate-600 font-bold uppercase tracking-widest mb-2">System Status</p>
-                <div class="text-[11px] text-slate-500 space-y-1">
-                    <p>Uptime: 99.9%</p>
-                    <p>Protocol: Nyatter v2.4.0</p>
-                    <p>Encryption: Enabled</p>
+                <div id="user-list" class="space-y-4 overflow-y-auto custom-scroll flex-1 pr-2">
+                    </div>
+                
+                <div class="mt-4 pt-4 border-t border-white/5 text-center">
+                    <p class="text-[10px] text-slate-600">Nyatter System v3.0</p>
                 </div>
             </div>
         </aside>
@@ -169,97 +221,189 @@
     </div>
 
     <script>
-        let currentImage = null;
+        // --- GLOBAL STATE ---
         let currentUser = null;
+        let currentPfp = null; // Stores Base64 of logged in user
+        let userCache = {}; // Stores username -> pfp mapping
+        let postImage = null;
+        let signupPfpData = null;
         let isTyping = false;
         const ADMIN = "HaydenDev";
+        const DEFAULT_PFP = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E";
 
+        // --- INIT ---
         window.onload = () => {
-            const user = localStorage.getItem('nyatter_user');
-            if (user) loginFlow(user);
+            const savedUser = JSON.parse(localStorage.getItem('nyatter_session'));
+            if (savedUser) {
+                currentUser = savedUser.username;
+                currentPfp = savedUser.pfp || DEFAULT_PFP;
+                loadApp();
+            }
         };
 
-        // --- AUTH LOGIC ---
-        function toggleAuth() {
-            document.getElementById('login-form').classList.toggle('hidden');
-            document.getElementById('signup-form').classList.toggle('hidden');
+        // --- AUTH FUNCTIONS ---
+        function toggleAuthMode() {
+            const loginEl = document.getElementById('login-section');
+            const signupEl = document.getElementById('signup-section');
+            const isLogin = !loginEl.classList.contains('hidden');
+            
+            if (isLogin) {
+                loginEl.classList.add('hidden');
+                signupEl.classList.remove('hidden');
+            } else {
+                loginEl.classList.remove('hidden');
+                signupEl.classList.add('hidden');
+            }
+            document.getElementById('auth-error').classList.add('hidden');
         }
 
-        async function auth(type) {
-            const user = document.getElementById(type === 'login' ? 'log-u' : 'reg-u').value.trim();
-            if(!user) return;
+        function previewSignupPfp(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = () => {
+                signupPfpData = reader.result;
+                document.getElementById('signup-pfp-preview').src = signupPfpData;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function performSignup() {
+            const username = document.getElementById('reg-user').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
+            const password = document.getElementById('reg-pass').value.trim();
             
-            if(type === 'signup') {
-                await fetch('/api/signup', {
+            if(!username || !email || !password) return showAuthError("All fields required.");
+
+            try {
+                const res = await fetch('/api/signup', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ username: user })
+                    body: JSON.stringify({ username, email, password, pfp: signupPfpData || DEFAULT_PFP })
                 });
+                const data = await res.json();
+                
+                if (data.error) throw new Error(data.error);
+                
+                // Auto login on success
+                completeLogin(data.user.username, data.user.pfp);
+            } catch (e) {
+                showAuthError(e.message);
             }
-            loginFlow(user);
         }
 
-        function loginFlow(user) {
-            currentUser = user;
-            localStorage.Nyatter_User = user;
-            localStorage.setItem('nyatter_user', user);
+        async function performLogin() {
+            const identifier = document.getElementById('login-id').value.trim();
+            const password = document.getElementById('login-pass').value.trim();
+            
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ identifier, password })
+                });
+                const data = await res.json();
+                
+                if (data.error) throw new Error(data.error);
+                
+                completeLogin(data.user.username, data.user.pfp);
+            } catch (e) {
+                showAuthError(e.message);
+            }
+        }
+
+        function completeLogin(username, pfp) {
+            currentUser = username;
+            currentPfp = pfp || DEFAULT_PFP;
+            localStorage.setItem('nyatter_session', JSON.stringify({ username, pfp: currentPfp }));
+            loadApp();
+        }
+
+        function loadApp() {
             document.getElementById('auth-ui').classList.add('hidden');
             document.getElementById('app-ui').classList.remove('hidden');
-            document.getElementById('user-display').innerText = "@" + user;
-            if(user === ADMIN) document.getElementById('dev-tag').classList.remove('hidden');
+            document.getElementById('user-display').innerText = "@" + currentUser;
+            document.getElementById('current-user-pfp').src = currentPfp;
+            document.getElementById('composer-pfp').src = currentPfp;
             
-            init();
+            if(currentUser === ADMIN) document.getElementById('dev-tag').classList.remove('hidden');
+
+            refreshAll();
+            setInterval(() => { if(!isTyping) refreshAll(); }, 4000);
         }
 
-        function init() {
-            renderFeed();
-            fetchUsers();
-            checkAlerts();
-            setInterval(() => {
-                if(!isTyping) { renderFeed(); checkAlerts(); fetchUsers(); }
-            }, 5000);
+        function showAuthError(msg) {
+            const el = document.getElementById('auth-error');
+            el.innerText = msg;
+            el.classList.remove('hidden');
         }
 
-        // --- CORE ACTIONS ---
+        // --- APP DATA LOGIC ---
+        async function refreshAll() {
+            await fetchUsers(); // Get PFPs first
+            await renderFeed();
+            await checkNotifs();
+        }
+
+        async function fetchUsers() {
+            try {
+                const res = await fetch('/api/users');
+                const users = await res.json();
+                
+                // Update Cache
+                users.forEach(u => {
+                    userCache[u.username] = u.pfp || DEFAULT_PFP;
+                });
+
+                // Update Sidebar
+                document.getElementById('user-list').innerHTML = users.map(u => `
+                    <div class="flex items-center gap-3 p-2 hover:bg-white/5 rounded-xl transition-colors cursor-default">
+                        <img src="${u.pfp || DEFAULT_PFP}" class="w-10 h-10 rounded-full user-avatar border border-indigo-500/20">
+                        <div>
+                            <p class="text-sm font-bold text-slate-200">@${u.username}</p>
+                            <p class="text-[10px] text-slate-500 font-mono">SIGNAL ACTIVE</p>
+                        </div>
+                    </div>
+                `).join('');
+            } catch(e) {}
+        }
+
+        function getUserPfp(username) {
+            return userCache[username] || DEFAULT_PFP;
+        }
+
+        // --- FEED LOGIC ---
+        function previewPostImage(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = () => {
+                postImage = reader.result;
+                document.getElementById('preview-area').innerHTML = `<img src="${postImage}" class="h-32 rounded-xl border border-indigo-500/50 mt-2">`;
+            };
+            reader.readAsDataURL(file);
+        }
+
         async function sendPost() {
             const text = document.getElementById('post-input').value.trim();
-            if(!text && !currentImage) return;
-            
+            if(!text && !postImage) return;
+
             await fetch('/api/posts', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ user: currentUser, text, img: currentImage })
+                body: JSON.stringify({ user: currentUser, text, img: postImage })
             });
-            
+
             document.getElementById('post-input').value = "";
             document.getElementById('preview-area').innerHTML = "";
-            currentImage = null;
-            renderFeed();
-        }
-
-        async function deletePost(id) {
-            if(!confirm("Erase this transmission?")) return;
-            await fetch('/api/posts/delete', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ id, user: currentUser })
-            });
-            renderFeed();
-        }
-
-        async function pinPost(id) {
-            await fetch('/api/posts/pin', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ id, user: currentUser })
-            });
+            postImage = null;
             renderFeed();
         }
 
         async function sendReply(id) {
-            const input = document.getElementById(`reply-for-${id}`);
+            const input = document.getElementById(`reply-${id}`);
             if(!input.value.trim()) return;
-            
+
             await fetch('/api/posts/reply', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -269,10 +413,40 @@
             renderFeed();
         }
 
-        // --- RENDERING ENGINE ---
-        function parseContent(text) {
+        // --- ADMIN & SOCIAL ---
+        async function deletePost(id) {
+            if(!confirm("Erase data permanently?")) return;
+            await fetch('/api/posts/delete', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ id, user: currentUser })
+            });
+            renderFeed();
+        }
+
+        async function togglePin(id) {
+            await fetch('/api/posts/pin', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ id, user: currentUser })
+            });
+            renderFeed();
+        }
+
+        async function toggleLike(id) {
+            await fetch('/api/posts/like', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ id, user: currentUser })
+            });
+            renderFeed();
+        }
+
+        // --- RENDERER ---
+        function parseText(text) {
             return text.replace(/@(\w+)/g, (match, name) => {
-                return `<span class="${name === currentUser ? 'my-tag' : 'other-tag'}">${match}</span>`;
+                const isMe = name === currentUser;
+                return `<span class="${isMe ? 'my-tag' : 'other-tag'}">${match}</span>`;
             });
         }
 
@@ -281,28 +455,29 @@
                 const res = await fetch('/api/posts');
                 const posts = await res.json();
                 const container = document.getElementById('feed-container');
-                
+
                 container.innerHTML = posts.map(p => `
-                    <div class="p-6 post-card ${p.pinned ? 'bg-indigo-500/[0.03] border-l-4 border-l-indigo-500' : ''}">
-                        <div class="flex gap-5">
-                            <img src="default.png" class="w-12 h-12 rounded-full bg-slate-800 shrink-0">
+                    <div class="p-6 post-card ${p.pinned ? 'bg-indigo-900/10 border-l-2 border-l-amber-400' : ''}">
+                        <div class="flex gap-4">
+                            <img src="${getUserPfp(p.user)}" class="w-12 h-12 rounded-full user-avatar border border-white/10 shrink-0">
                             <div class="flex-1 min-w-0">
-                                <div class="flex justify-between items-center mb-1">
+                                <div class="flex justify-between items-start">
                                     <div class="flex items-center gap-2">
-                                        <span class="font-bold text-white tracking-tight">@${p.user}</span>
-                                        ${p.user === ADMIN ? '<span class="dev-badge">Core Dev</span>' : ''}
-                                        ${p.pinned ? '<span class="text-indigo-400 font-black text-[10px] tracking-widest">PINNED</span>' : ''}
+                                        <span class="font-bold text-white text-base">@${p.user}</span>
+                                        ${p.user === ADMIN ? '<span class="bg-indigo-500 text-[9px] px-1.5 py-0.5 rounded text-white font-bold">DEV</span>' : ''}
+                                        ${p.pinned ? '<span class="text-amber-400 text-[10px] font-bold tracking-widest">📌 PINNED</span>' : ''}
                                     </div>
-                                    <div class="flex gap-4">
-                                        ${currentUser === ADMIN ? `<button onclick="pinPost('${p._id}')" class="text-[10px] font-bold text-slate-500 hover:text-indigo-400 uppercase">Pin</button>` : ''}
-                                        ${(p.user === currentUser || currentUser === ADMIN) ? `<button onclick="deletePost('${p._id}')" class="text-[10px] font-bold text-slate-500 hover:text-red-500 uppercase">Delete</button>` : ''}
+                                    <div class="flex gap-3 opacity-60 hover:opacity-100 transition-opacity">
+                                        ${currentUser === ADMIN ? `<button onclick="togglePin('${p._id}')" class="text-[10px] uppercase font-bold text-slate-400 hover:text-amber-400">Pin</button>` : ''}
+                                        ${(p.user === currentUser || currentUser === ADMIN) ? `<button onclick="deletePost('${p._id}')" class="text-[10px] uppercase font-bold text-slate-400 hover:text-red-500">Delete</button>` : ''}
                                     </div>
                                 </div>
-                                <p class="text-slate-200 leading-relaxed text-[15px] whitespace-pre-wrap">${parseContent(p.text)}</p>
-                                ${p.img ? `<img src="${p.img}" class="w-full mt-4 rounded-2xl border border-white/10 shadow-2xl">` : ''}
                                 
-                                <div class="mt-6 flex gap-8">
-                                    <button class="flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-pink-500 transition-colors">
+                                <div class="mt-2 text-slate-200 leading-relaxed whitespace-pre-wrap font-light">${parseText(p.text)}</div>
+                                ${p.img ? `<img src="${p.img}" class="mt-3 rounded-2xl w-full border border-white/5 shadow-2xl max-h-[400px] object-cover">` : ''}
+
+                                <div class="flex gap-6 mt-4 pb-2 border-b border-white/5">
+                                    <button onclick="toggleLike('${p._id}')" class="flex items-center gap-2 text-xs font-bold ${p.likes?.includes(currentUser) ? 'text-pink-500' : 'text-slate-500 hover:text-pink-400'} transition-colors">
                                         ❤️ ${p.likes?.length || 0}
                                     </button>
                                     <div class="flex items-center gap-2 text-xs font-bold text-slate-500">
@@ -310,71 +485,76 @@
                                     </div>
                                 </div>
 
-                                <div class="mt-6 space-y-4 pl-5 border-l border-white/5">
+                                <div class="mt-4 space-y-4">
                                     ${p.replies?.map(r => `
-                                        <div class="text-[13px] text-slate-400">
-                                            <span class="text-indigo-400 font-bold">@${r.user}</span> ${parseContent(r.text)}
+                                        <div class="flex gap-3">
+                                            <img src="${getUserPfp(r.user)}" class="w-8 h-8 rounded-full user-avatar border border-white/5">
+                                            <div class="bg-white/5 rounded-r-xl rounded-bl-xl p-3 flex-1 text-sm">
+                                                <span class="text-indigo-400 font-bold block text-xs mb-1">@${r.user}</span>
+                                                <span class="text-slate-300 font-light">${parseText(r.text)}</span>
+                                            </div>
                                         </div>
                                     `).join('') || ''}
                                     
                                     <div class="flex gap-3 pt-2">
-                                        <input id="reply-for-${p._id}" 
-                                               onfocus="isTyping=true" onblur="setTimeout(()=>isTyping=false, 200)"
-                                               placeholder="Type a response..." 
-                                               class="flex-1 bg-slate-900/50 border border-white/10 rounded-xl px-4 py-2 text-xs text-white outline-none focus:border-indigo-500/50 transition-all">
-                                        <button onclick="sendReply('${p._id}')" class="text-indigo-400 font-black text-[10px] uppercase tracking-widest px-2">Reply</button>
+                                        <input id="reply-${p._id}" 
+                                            onfocus="isTyping=true" 
+                                            onblur="setTimeout(()=>isTyping=false, 200)"
+                                            placeholder="Write a reply..." 
+                                            class="flex-1 bg-slate-900/50 border border-white/10 rounded-xl px-4 py-2 text-xs text-white outline-none focus:border-indigo-500/50 transition-all">
+                                        <button onclick="sendReply('${p._id}')" class="text-indigo-400 font-black text-[10px] uppercase tracking-widest hover:text-white">Send</button>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 `).join('');
-            } catch (e) {}
+            } catch(e) {}
         }
 
-        async function fetchUsers() {
-            const res = await fetch('/api/users');
-            const users = await res.json();
-            document.getElementById('user-list').innerHTML = users.map(u => `
-                <div class="flex items-center gap-3">
-                    <img src="default.png" class="w-8 h-8 rounded-full bg-slate-800">
-                    <span class="text-sm font-semibold text-slate-300">@${u.username}</span>
-                </div>
-            `).join('');
+        // --- NOTIFICATIONS ---
+        function toggleNotifs() {
+            const overlay = document.getElementById('notif-overlay');
+            overlay.classList.toggle('hidden');
         }
 
-        async function checkAlerts() {
+        async function checkNotifs() {
             const res = await fetch(`/api/notifications/${currentUser}`);
             const data = await res.json();
-            document.getElementById('notif-dot').style.display = data.length > 0 ? 'block' : 'none';
-            document.getElementById('notif-list').innerHTML = data.map(n => `
-                <div class="bg-white/5 p-3 rounded-xl flex justify-between items-center text-[11px] border border-white/5">
-                    <span class="text-slate-300"><b>@${n.fromUser}</b> mentioned you</span>
-                    <button onclick="clearAlert('${n._id}')" class="text-red-400 font-black ml-4">X</button>
+            
+            const dot = document.getElementById('notif-dot');
+            dot.style.display = data.length > 0 ? 'block' : 'none';
+
+            const list = document.getElementById('notif-list');
+            list.innerHTML = data.map(n => `
+                <div class="bg-indigo-900/20 border border-indigo-500/20 p-4 rounded-2xl flex justify-between items-center group hover:bg-indigo-900/30 transition-colors">
+                    <div class="flex items-center gap-3">
+                        <img src="${getUserPfp(n.fromUser)}" class="w-8 h-8 rounded-full">
+                        <div>
+                            <p class="text-sm text-indigo-200">
+                                <span class="font-bold text-white">@${n.fromUser}</span> tagged you
+                            </p>
+                            <p class="text-[10px] text-slate-500">Just now</p>
+                        </div>
+                    </div>
+                    <button onclick="clearNotif('${n._id}')" class="w-6 h-6 flex items-center justify-center rounded-full bg-white/5 hover:bg-red-500 text-slate-400 hover:text-white transition-all">✕</button>
                 </div>
-            `).join('') || '<p class="text-[10px] text-slate-600 text-center py-4">No signals detected.</p>';
+            `).join('') || `<div class="text-center py-10 opacity-30 text-4xl">📭</div>`;
         }
 
-        async function clearAlert(id) {
+        async function clearNotif(id) {
             await fetch('/api/notifications/clear', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ id })
             });
-            checkAlerts();
+            checkNotifs();
         }
 
-        // --- UTILS ---
-        function toggleNotifPanel() { document.getElementById('notif-panel').classList.toggle('hidden'); }
-        function previewImage(e) {
-            const reader = new FileReader();
-            reader.onload = () => {
-                currentImage = reader.result;
-                document.getElementById('preview-area').innerHTML = `<img src="${currentImage}">`;
-            };
-            if(e.target.files[0]) reader.readAsDataURL(e.target.files[0]);
+        function logout() {
+            localStorage.removeItem('nyatter_session');
+            location.reload();
         }
-        function logout() { localStorage.clear(); location.reload(); }
     </script>
 </body>
 </html>
