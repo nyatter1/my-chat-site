@@ -68,7 +68,7 @@
             border-radius: 20px; padding: 20px; display: none; flex-direction: column;
             z-index: 999; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
-        .notif-item { padding: 10px; border-bottom: 1px solid var(--glass); font-size: 0.85rem; }
+        .notif-item { padding: 10px; border-bottom: 1px solid var(--glass); font-size: 0.85rem; border-left: 3px solid var(--primary-violet); margin-bottom: 5px; background: rgba(255,255,255,0.02); }
 
         /* --- FEED --- */
         .feed-scroll-container { height: 100vh; overflow-y: scroll; scroll-snap-type: y mandatory; scrollbar-width: none; }
@@ -79,9 +79,9 @@
 
         /* --- ENGAGEMENT --- */
         .engagement-bar { position: absolute; right: 15px; bottom: 100px; display: flex; flex-direction: column; gap: 20px; align-items: center; z-index: 10; }
-        .action-btn { background: rgba(255,255,255,0.1); width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; cursor: pointer; color: white; border: 1px solid rgba(255,255,255,0.1); }
-        .action-btn.liked { color: var(--red-like); border-color: var(--red-like); }
-        .action-label { font-size: 0.75rem; font-weight: 700; }
+        .action-btn { background: rgba(255,255,255,0.1); width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; cursor: pointer; color: white; border: 1px solid rgba(255,255,255,0.1); transition: 0.3s; }
+        .action-btn:hover { background: var(--primary-violet); }
+        .action-label { font-size: 0.75rem; font-weight: 700; margin-top: -15px; margin-bottom: 5px; }
 
         /* MODAL */
         #upload-modal { position: fixed; inset: 0; background: rgba(5,2,8,0.95); backdrop-filter: blur(50px); display: none; align-items: center; justify-content: center; z-index: 99999; }
@@ -103,7 +103,7 @@
         .progress-box { width: 100%; height: 4px; background: rgba(255,255,255,0.1); border-radius: 10px; margin-top: 15px; }
         .progress-fill { height: 100%; width: 0%; background: var(--primary-violet); border-radius: 10px; }
 
-        .follow-badge { font-size: 0.7rem; background: var(--primary-violet); padding: 2px 8px; border-radius: 5px; margin-left: 10px; cursor: pointer; }
+        #upload-btn:disabled { opacity: 0.5; cursor: not-allowed; }
     </style>
 </head>
 <body>
@@ -140,7 +140,7 @@
 
     <div id="dashboard">
         <aside class="sidebar">
-            <h2 style="color:var(--primary-violet); margin-bottom: 30px;">VIKVOK</h2>
+            <h2 style="color:var(--primary-violet); margin-bottom: 30px; letter-spacing: 2px;">VIKVOK</h2>
             <nav>
                 <div class="nav-item active" onclick="goHome()"><i class="ri-home-7-fill"></i> Home</div>
                 <div class="nav-item"><i class="ri-compass-3-line"></i> Explore</div>
@@ -148,34 +148,33 @@
                 <div class="nav-item" onclick="toggleNotifs()"><i class="ri-notification-3-line"></i> Notifications</div>
             </nav>
             <div id="notif-panel">
-                <h4 style="margin-bottom: 10px;">Recent Activity</h4>
+                <h4 style="margin-bottom: 10px;">Activity</h4>
                 <div id="notif-list"></div>
             </div>
-            <button class="btn-primary" onclick="toggleModal(true)" style="margin-top:20px; padding:15px;">CREATE</button>
-            <button onclick="logout()" class="nav-item" style="margin-top:auto; background:none; border:none; cursor:pointer;"><i class="ri-logout-box-line"></i> Logout</button>
+            <button class="btn-primary" onclick="toggleModal(true)" style="margin-top:20px; padding:15px; font-weight:800;">POST VIDEO</button>
+            <button onclick="logout()" class="nav-item" style="margin-top:auto; background:none; border:none; width:100%;"><i class="ri-logout-box-line"></i> Logout</button>
         </aside>
 
         <main class="feed-scroll-container" id="feed"></main>
 
         <section style="padding: 30px; border-left: 1px solid rgba(255,255,255,0.05);">
-            <a href="profile.html" style="display:flex; align-items:center; gap:12px; background:var(--glass); padding:15px; border-radius:20px; text-decoration:none; color:inherit;">
-                <div style="width:45px; height:45px; background:var(--primary-violet); border-radius:12px; display:flex; align-items:center; justify-content:center; font-weight:800;" id="user-init">?</div>
-                <div><p style="font-size:0.7rem; opacity:0.5;">YOUR PROFILE</p><p id="user-display" style="font-weight:700;">Guest</p></div>
-            </a>
+            <div onclick="window.location.href='profile.html'" style="display:flex; align-items:center; gap:12px; background:var(--glass); padding:15px; border-radius:20px; cursor:pointer;">
+                <div style="width:45px; height:45px; background:var(--primary-violet); border-radius:12px; display:flex; align-items:center; justify-content:center; font-weight:800; color:white;" id="user-init">?</div>
+                <div><p style="font-size:0.7rem; opacity:0.5;">YOUR CHANNEL</p><p id="user-display" style="font-weight:700;">Guest</p></div>
+            </div>
         </section>
     </div>
 
     <div id="upload-modal">
         <div class="modal-content">
-            <h2>Upload Video</h2>
-            <p style="font-size: 0.8rem; margin-bottom: 15px; opacity: 0.6;">Select an MP4 file from your device</p>
+            <h2 style="margin-bottom:10px;">Share Video</h2>
             <div class="input-group">
-                <i class="ri-file-upload-line"></i>
-                <input type="file" id="v-file" accept="video/mp4,video/x-m4v,video/*">
+                <i class="ri-video-upload-line"></i>
+                <input type="file" id="v-file" accept="video/*">
             </div>
-            <div class="input-group"><i class="ri-edit-line"></i><input type="text" id="v-cap" placeholder="Caption..."></div>
-            <button class="btn-primary" id="upload-btn" onclick="uploadVideo()" style="width:100%; margin-top:10px; padding:15px;">Publish</button>
-            <p onclick="toggleModal(false)" style="margin-top:15px; cursor:pointer; opacity:0.5;">Cancel</p>
+            <div class="input-group"><i class="ri-chat-smile-line"></i><input type="text" id="v-cap" placeholder="Write a caption..."></div>
+            <button class="btn-primary" id="upload-btn" onclick="uploadVideo()">Publish Now</button>
+            <p onclick="toggleModal(false)" style="margin-top:15px; cursor:pointer; opacity:0.5; font-weight:600;">Discard</p>
         </div>
     </div>
 
@@ -190,18 +189,15 @@
             setTimeout(() => document.getElementById('custom-alert').classList.remove('active'), 3000);
         }
 
-        // --- PERSISTENT LOGIN CHECK ---
+        // --- CHECK LOGIN STATUS ---
         window.onload = () => {
-            const savedUser = localStorage.getItem('vikvok_u');
-            if(savedUser) {
-                enterDash(savedUser);
-            }
+            const user = localStorage.getItem('vikvok_u');
+            if(user) enterDash(user);
         };
 
         function goHome() {
-            // Home button no longer logs out, just refreshes feed
             loadFeed();
-            triggerAlert("Feed Updated");
+            triggerAlert("Refreshed");
         }
 
         function logout() {
@@ -209,7 +205,7 @@
             location.reload();
         }
 
-        // --- SIGNUP/LOGIN ---
+        // --- AUTH LOGIC ---
         document.getElementById('signup-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const payload = {
@@ -253,41 +249,9 @@
             document.getElementById('user-display').innerText = user;
             document.getElementById('user-init').innerText = user.charAt(0).toUpperCase();
             loadFeed();
-            loadNotifications();
         }
 
-        // --- NOTIFICATIONS ---
-        async function loadNotifications() {
-            const user = localStorage.getItem('vikvok_u');
-            const res = await fetch(`/api/notifications/${user}`);
-            const data = await res.json();
-            const list = document.getElementById('notif-list');
-            list.innerHTML = data.length ? '' : '<p style="opacity:0.5; font-size:0.8rem;">No new activity</p>';
-            data.forEach(n => {
-                list.innerHTML += `<div class="notif-item"><b>${n.fromUser}</b> ${n.message.split(' ').slice(1).join(' ')}</div>`;
-            });
-        }
-
-        function toggleNotifs() {
-            const panel = document.getElementById('notif-panel');
-            panel.style.display = panel.style.display === 'flex' ? 'none' : 'flex';
-            loadNotifications();
-        }
-
-        // --- FOLLOW SYSTEM ---
-        async function followUser(target) {
-            const currentUser = localStorage.getItem('vikvok_u');
-            if(currentUser === target) return triggerAlert("You can't follow yourself!");
-            
-            const res = await fetch('/api/follow', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ currentUser, targetUser: target })
-            });
-            if(res.ok) triggerAlert(`Following @${target}`);
-        }
-
-        // --- FEED & VIDEO ---
+        // --- FEED & VIDEO HANDLING ---
         async function loadFeed() {
             const res = await fetch('/api/videos');
             const videos = await res.json();
@@ -302,8 +266,8 @@
                         <div class="engagement-bar">
                             <div class="action-btn" onclick="likeVideo('${v._id}', this)"><i class="ri-heart-3-fill"></i></div>
                             <span class="action-label">${v.likes}</span>
-                            <div class="action-btn" onclick="followUser('${v.username}')"><i class="ri-user-add-line"></i></div>
-                            <span class="action-label">Follow</span>
+                            <div class="action-btn" onclick="window.location.href='profile.html?u=${v.username}'"><i class="ri-user-follow-line"></i></div>
+                            <span class="action-label">Profile</span>
                         </div>
                         <div class="controls-overlay">
                             <div class="volume-container">
@@ -311,8 +275,8 @@
                                 <input type="range" class="volume-slider" min="0" max="1" step="0.1" value="0.5">
                             </div>
                             <div class="video-meta">
-                                <a href="profile.html?u=${v.username}" style="color:var(--primary-violet); font-weight:800; text-decoration:none;">@${v.username}</a>
-                                <p>${v.caption}</p>
+                                <h3 style="cursor:pointer;" onclick="window.location.href='profile.html?u=${v.username}'">@${v.username}</h3>
+                                <p style="opacity:0.8;">${v.caption}</p>
                                 <div class="progress-box"><div class="progress-fill"></div></div>
                             </div>
                         </div>
@@ -325,50 +289,60 @@
         // --- FILE UPLOAD ---
         async function uploadVideo() {
             const fileInput = document.getElementById('v-file');
-            const captionInput = document.getElementById('v-cap');
+            const capInput = document.getElementById('v-cap');
             const btn = document.getElementById('upload-btn');
 
-            if(!fileInput.files[0]) return triggerAlert("Please select a video file!");
-            
-            btn.innerText = "Uploading...";
+            if(!fileInput.files[0]) return triggerAlert("Choose a file first!");
+
             btn.disabled = true;
+            btn.innerText = "Processing...";
 
             const formData = new FormData();
             formData.append('videoFile', fileInput.files[0]);
             formData.append('username', localStorage.getItem('vikvok_u'));
-            formData.append('caption', captionInput.value);
+            formData.append('caption', capInput.value);
 
             try {
-                const res = await fetch('/api/upload', {
-                    method: 'POST',
-                    body: formData // No Headers needed for FormData
-                });
+                const res = await fetch('/api/upload', { method: 'POST', body: formData });
                 if(res.ok) {
                     toggleModal(false);
                     loadFeed();
-                    triggerAlert("Video Published!");
-                } else {
-                    triggerAlert("Upload Failed!");
-                }
+                    triggerAlert("Video Live!");
+                } else triggerAlert("Upload Error");
             } catch (err) {
-                triggerAlert("Error connecting to server");
+                triggerAlert("Server timeout");
             } finally {
-                btn.innerText = "Publish";
                 btn.disabled = false;
+                btn.innerText = "Publish Now";
             }
         }
 
         function toggleModal(s) { document.getElementById('upload-modal').style.display = s ? 'flex' : 'none'; }
 
+        function toggleNotifs() {
+            const p = document.getElementById('notif-panel');
+            const isVisible = p.style.display === 'flex';
+            p.style.display = isVisible ? 'none' : 'flex';
+            if(!isVisible) fetchNotifs();
+        }
+
+        async function fetchNotifs() {
+            const u = localStorage.getItem('vikvok_u');
+            const res = await fetch(`/api/notifications/${u}`);
+            const data = await res.json();
+            const list = document.getElementById('notif-list');
+            list.innerHTML = data.map(n => `<div class="notif-item"><b>${n.fromUser}</b> ${n.message.split(' ').slice(1).join(' ')}</div>`).join('');
+        }
+
         function initPlayer(card) {
             const v = card.querySelector('video');
-            const wrapper = card.querySelector('.video-wrapper');
+            const wrap = card.querySelector('.video-wrapper');
             const progress = card.querySelector('.progress-fill');
             const vol = card.querySelector('.volume-slider');
 
-            wrapper.onclick = (e) => { if(!e.target.closest('.action-btn')) v.paused ? v.play() : v.pause(); };
+            wrap.onclick = (e) => { if(!e.target.closest('.action-btn')) v.paused ? v.play() : v.pause(); };
             v.ontimeupdate = () => progress.style.width = (v.currentTime / v.duration) * 100 + '%';
-            vol.oninput = (e) => v.volume = e.target.value;
+            vol.oninput = (e) => { v.volume = e.target.value; e.stopPropagation(); };
             vol.onclick = (e) => e.stopPropagation();
         }
 
