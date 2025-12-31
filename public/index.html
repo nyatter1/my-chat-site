@@ -2,503 +2,784 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SketchDash Pro - Ultimate Drawing Battle</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SketchDash Pro | Ultimate Creative Combat</title>
+    
+    <!-- External Dependencies -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.3/howler.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <style>
         :root {
             --primary: #6366f1;
-            --secondary: #ec4899;
-            --accent: #f59e0b;
-            --bg: #0f172a;
+            --primary-dark: #4f46e5;
+            --secondary: #f59e0b;
+            --accent: #ec4899;
+            --success: #10b981;
+            --danger: #ef4444;
+            --bg-dark: #0f172a;
+            --panel-bg: rgba(255, 255, 255, 0.98);
         }
 
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
         body {
-            font-family: 'Quicksand', sans-serif;
-            background-color: var(--bg);
-            color: white;
+            font-family: 'Nunito', sans-serif;
+            background-color: #f1f5f9;
+            background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+            background-size: 24px 24px;
             overflow: hidden;
-            touch-action: none;
+            height: 100vh;
+            margin: 0;
         }
 
-        .font-brand { font-family: 'Fredoka One', cursive; }
+        .font-game { font-family: 'Fredoka One', cursive; }
 
-        .glass-panel {
-            background: rgba(30, 41, 59, 0.7);
+        /* --- UI COMPONENTS --- */
+        .glass-card {
+            background: var(--panel-bg);
             backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 10px 30px -5px rgba(0,0,0,0.1);
         }
 
-        .canvas-container {
-            aspect-ratio: 16 / 9;
-            background: white;
-            cursor: crosshair;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
-        }
-
-        .avatar-preview {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2.5rem;
+        .btn-neo {
             position: relative;
-            transition: transform 0.2s;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 6px 0 rgba(0,0,0,0.1);
+        }
+        .btn-neo:active { transform: translateY(4px); box-shadow: 0 2px 0 rgba(0,0,0,0.1); }
+
+        .canvas-bg {
+            background-color: white;
+            background-image: 
+                linear-gradient(45deg, #f8fafc 25%, transparent 25%), 
+                linear-gradient(-45deg, #f8fafc 25%, transparent 25%), 
+                linear-gradient(45deg, transparent 75%, #f8fafc 75%), 
+                linear-gradient(-45deg, transparent 75%, #f8fafc 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
         }
 
-        .accessory-overlay {
-            position: absolute;
-            top: -10px;
-            right: -10px;
-            font-size: 1.8rem;
+        /* --- CUSTOM SCROLLBAR --- */
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+        /* --- ANIMATIONS --- */
+        @keyframes slideIn { from { transform: translateX(-100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .animate-slide { animation: slideIn 0.5s ease-out forwards; }
+        
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        .animate-float { animation: float 3s ease-in-out infinite; }
+
+        .tool-active { outline: 3px solid var(--primary); outline-offset: 2px; transform: scale(1.1); }
+        
+        /* Layout Tweaks */
+        .game-grid {
+            display: grid;
+            grid-template-columns: 280px 1fr 320px;
+            grid-template-rows: 90px 1fr;
+            gap: 16px;
+            height: 100vh;
+            padding: 16px;
         }
 
-        .chat-bubble {
-            animation: slideIn 0.2s ease-out;
-        }
-
-        @keyframes slideIn {
-            from { transform: translateX(20px); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-
-        .btn-hover {
-            transition: all 0.2s;
-        }
-        .btn-hover:hover {
-            transform: translateY(-2px);
-            filter: brightness(1.1);
-        }
-
-        #timer-ring {
-            transition: stroke-dashoffset 1s linear;
-        }
-
-        .correct-guess-flash {
-            animation: flashGreen 1s ease-out;
-        }
-
-        @keyframes flashGreen {
-            0% { background-color: transparent; }
-            50% { background-color: rgba(34, 197, 94, 0.3); }
-            100% { background-color: transparent; }
+        @media (max-width: 1024px) {
+            .game-grid { grid-template-columns: 1fr 300px; }
+            .sidebar-left { display: none; }
         }
     </style>
 </head>
-<body class="h-screen flex flex-col items-center justify-center p-4">
+<body class="antialiased text-slate-800">
 
-    <!-- LOGIN / LOBBY SCREEN -->
-    <div id="lobby-screen" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950 p-6">
-        <div class="glass-panel w-full max-w-lg p-8 space-y-8 text-center">
-            <h1 class="text-5xl font-brand text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-pink-500">SKETCH DASH</h1>
-            
-            <!-- Character Customizer -->
-            <div class="flex flex-col items-center space-y-6">
-                <div id="lobby-avatar" class="avatar-preview bg-indigo-500 border-4 border-white shadow-2xl">
-                    <span id="base-emoji">🐱</span>
-                    <span id="acc-emoji" class="accessory-overlay">🎩</span>
+    <!-- ========================================== -->
+    <!--               LOBBY / MENU                 -->
+    <!-- ========================================== -->
+    <div id="screen-lobby" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-indigo-50/50 backdrop-blur-sm">
+        <div class="w-full max-w-5xl glass-card rounded-[40px] overflow-hidden flex shadow-2xl animate-slide">
+            <!-- Left Branding -->
+            <div class="w-2/5 bg-indigo-600 p-12 text-white flex flex-col justify-between relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
+                    <div class="absolute top-10 left-10 text-9xl"><i class="fas fa-palette"></i></div>
+                    <div class="absolute bottom-10 right-10 text-9xl"><i class="fas fa-pencil-alt"></i></div>
                 </div>
+                <div class="relative z-10">
+                    <h1 class="text-6xl font-game leading-tight mb-4">Sketch<br><span class="text-indigo-200">Dash</span> Pro</h1>
+                    <p class="text-indigo-100 text-lg font-semibold">The ultimate multiplayer drawing arena. Experience creative combat like never before.</p>
+                </div>
+                <div class="relative z-10 flex gap-4">
+                    <div class="bg-white/10 p-4 rounded-2xl backdrop-blur-md flex-1 text-center">
+                        <div class="text-xs font-black uppercase tracking-widest text-indigo-300">Global Rank</div>
+                        <div class="text-2xl font-game" id="lobby-rank">#4,201</div>
+                    </div>
+                    <div class="bg-white/10 p-4 rounded-2xl backdrop-blur-md flex-1 text-center">
+                        <div class="text-xs font-black uppercase tracking-widest text-indigo-300">Ink Earned</div>
+                        <div class="text-2xl font-game" id="lobby-ink-total">1,240</div>
+                    </div>
+                </div>
+            </div>
 
-                <div class="w-full space-y-4">
-                    <input type="text" id="username-input" maxlength="15" placeholder="Enter Username..." 
-                        class="w-full px-4 py-3 bg-slate-800 border-2 border-indigo-500/30 rounded-xl text-center text-xl focus:border-indigo-500 outline-none">
-                    
+            <!-- Right Controls -->
+            <div class="flex-1 p-12 bg-white flex flex-col justify-center">
+                <div class="space-y-8">
+                    <div>
+                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Your Identity</label>
+                        <div class="flex gap-4 items-center">
+                            <div class="relative group cursor-pointer" onclick="openCustomizer()">
+                                <div id="lobby-pfp" class="w-24 h-24 rounded-3xl bg-slate-100 flex items-center justify-center text-5xl border-4 border-white shadow-lg transition-transform hover:scale-105">🐱</div>
+                                <div id="lobby-acc" class="absolute -top-3 -right-3 text-4xl drop-shadow-md">👑</div>
+                                <div class="absolute inset-0 bg-indigo-600/20 opacity-0 group-hover:opacity-100 rounded-3xl flex items-center justify-center transition-opacity">
+                                    <i class="fas fa-pen text-white"></i>
+                                </div>
+                            </div>
+                            <div class="flex-1">
+                                <input type="text" id="username-input" maxlength="15" placeholder="Enter name..." class="w-full text-3xl font-game text-slate-800 border-b-4 border-slate-100 focus:border-indigo-500 outline-none pb-2 transition-all">
+                                <p class="text-slate-400 font-bold text-sm mt-1">Level 12 Creative Artist</p>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="grid grid-cols-2 gap-4">
-                        <button onclick="changeBase()" class="bg-slate-700 p-3 rounded-lg hover:bg-slate-600 transition">Change Base</button>
-                        <button onclick="changeAccessory()" class="bg-slate-700 p-3 rounded-lg hover:bg-slate-600 transition">Change Accessory</button>
-                    </div>
-                </div>
-            </div>
-
-            <button onclick="joinGame()" class="w-full py-4 bg-indigo-600 hover:bg-indigo-500 rounded-2xl font-bold text-2xl shadow-lg btn-hover">
-                PLAY NOW
-            </button>
-
-            <div class="text-slate-400 text-sm">
-                Persistent Wins: <span id="persistent-wins" class="text-indigo-400">0</span> | 
-                Rank: <span id="persistent-rank" class="text-pink-400">NOVICE</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- MAIN GAME HUD -->
-    <div id="game-screen" class="hidden w-full h-full max-w-7xl flex flex-col gap-4">
-        
-        <!-- Header -->
-        <div class="h-20 flex items-center justify-between px-6 glass-panel">
-            <div class="flex items-center gap-4">
-                <div class="relative w-14 h-14">
-                    <svg class="w-full h-full transform -rotate-90">
-                        <circle cx="28" cy="28" r="24" stroke="currentColor" stroke-width="4" fill="transparent" class="text-slate-700" />
-                        <circle id="timer-ring" cx="28" cy="28" r="24" stroke="currentColor" stroke-width="4" fill="transparent" 
-                            stroke-dasharray="150.8" stroke-dashoffset="0" class="text-indigo-500" />
-                    </svg>
-                    <span id="timer-text" class="absolute inset-0 flex items-center justify-center font-bold text-lg">60</span>
-                </div>
-                <div>
-                    <div id="round-display" class="text-xs uppercase tracking-widest text-slate-400">Round 1/10</div>
-                    <div id="word-display" class="text-2xl font-brand tracking-[0.3em] text-white">_ _ _ _ _</div>
-                </div>
-            </div>
-
-            <div id="game-status-msg" class="text-indigo-400 font-bold animate-pulse">Waiting for players...</div>
-
-            <button onclick="leaveGame()" class="px-4 py-2 bg-slate-800 hover:bg-red-900/50 rounded-lg text-sm transition">Leave</button>
-        </div>
-
-        <div class="flex-1 flex gap-4 min-h-0">
-            <!-- Left Sidebar: Players -->
-            <div class="w-64 glass-panel flex flex-col overflow-hidden">
-                <div class="p-4 border-b border-white/10 font-bold">PLAYERS</div>
-                <div id="player-list" class="flex-1 overflow-y-auto p-2 space-y-2">
-                    <!-- Players injected here -->
-                </div>
-            </div>
-
-            <!-- Middle: Canvas Area -->
-            <div class="flex-1 flex flex-col gap-4 min-w-0">
-                <div class="relative flex-1 glass-panel p-2 overflow-hidden flex flex-col">
-                    <!-- Canvas -->
-                    <div id="canvas-wrapper" class="relative flex-1 bg-white rounded-xl overflow-hidden">
-                        <canvas id="drawing-canvas"></canvas>
-                        
-                        <!-- Word Selection Overlay -->
-                        <div id="word-picker" class="hidden absolute inset-0 z-20 bg-slate-900/90 flex flex-col items-center justify-center p-6 text-center">
-                            <h2 class="text-3xl font-brand mb-8">Choose a word to draw!</h2>
-                            <div id="word-options" class="flex flex-wrap justify-center gap-4">
-                                <!-- Buttons injected -->
-                            </div>
-                        </div>
-
-                        <!-- Intermission Overlay -->
-                        <div id="intermission-overlay" class="hidden absolute inset-0 z-20 bg-indigo-900/80 flex flex-col items-center justify-center text-center">
-                            <div class="text-xl text-indigo-200 mb-2">The word was</div>
-                            <div id="revealed-word" class="text-6xl font-brand mb-6">APPLE</div>
-                            <div id="winner-reveal" class="text-2xl">No one guessed it!</div>
-                        </div>
+                        <button onclick="enterQueue()" class="btn-neo bg-indigo-600 hover:bg-indigo-700 text-white p-6 rounded-3xl flex flex-col items-center gap-2">
+                            <i class="fas fa-play text-2xl"></i>
+                            <span class="font-game text-xl">Quick Play</span>
+                        </button>
+                        <button onclick="openShop()" class="btn-neo bg-amber-400 hover:bg-amber-500 text-white p-6 rounded-3xl flex flex-col items-center gap-2">
+                            <i class="fas fa-store text-2xl"></i>
+                            <span class="font-game text-xl">Item Shop</span>
+                        </button>
                     </div>
 
-                    <!-- Toolbar -->
-                    <div id="toolbar" class="h-16 flex items-center justify-between px-4 mt-2 hidden">
+                    <div class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl">
                         <div class="flex items-center gap-3">
-                            <input type="color" id="color-picker" class="w-10 h-10 rounded cursor-pointer bg-transparent" value="#000000">
-                            <div class="flex gap-1">
-                                <button onclick="setBrush(3)" class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center"><div class="w-1 h-1 bg-white rounded-full"></div></button>
-                                <button onclick="setBrush(8)" class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center"><div class="w-3 h-3 bg-white rounded-full"></div></button>
-                                <button onclick="setBrush(15)" class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center"><div class="w-5 h-5 bg-white rounded-full"></div></button>
-                            </div>
+                            <div class="w-3 h-3 rounded-full bg-green-500 animate-pulse"></div>
+                            <span class="text-sm font-bold text-slate-500">2,410 Players Online</span>
                         </div>
-                        <button onclick="clearCanvas()" class="px-6 py-2 bg-red-600 hover:bg-red-500 rounded-lg font-bold transition">CLEAR</button>
+                        <div class="flex gap-2">
+                            <button class="w-10 h-10 rounded-xl bg-white text-slate-400 border border-slate-200 hover:text-indigo-600"><i class="fas fa-cog"></i></button>
+                            <button class="w-10 h-10 rounded-xl bg-white text-slate-400 border border-slate-200 hover:text-indigo-600"><i class="fas fa-question"></i></button>
+                        </div>
                     </div>
                 </div>
-            </div>
-
-            <!-- Right Sidebar: Chat -->
-            <div class="w-80 glass-panel flex flex-col overflow-hidden">
-                <div class="p-4 border-b border-white/10 font-bold">CHAT & GUESSES</div>
-                <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-3 text-sm">
-                    <!-- Messages injected -->
-                </div>
-                <form id="chat-form" class="p-4 bg-slate-900/50">
-                    <input type="text" id="chat-input" placeholder="Type your guess..." 
-                        class="w-full bg-slate-800 border-none rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-indigo-500">
-                </form>
             </div>
         </div>
     </div>
 
-    <!-- UI Audio Elements -->
-    <audio id="sfx-correct" src="https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3"></audio>
-    <audio id="sfx-win" src="https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3"></audio>
+    <!-- ========================================== -->
+    <!--                GAME SCREEN                 -->
+    <!-- ========================================== -->
+    <div id="screen-game" class="hidden h-screen w-full game-grid">
+        
+        <!-- HEADER -->
+        <header class="col-span-full glass-card rounded-3xl flex items-center px-8 justify-between">
+            <div class="flex items-center gap-8">
+                <div class="flex flex-col items-center">
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Round</span>
+                    <span class="font-game text-3xl text-slate-700" id="round-val">1<span class="text-slate-300 text-xl">/</span>10</span>
+                </div>
+                <div class="w-px h-10 bg-slate-200"></div>
+                <div class="flex flex-col items-center">
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Timer</span>
+                    <span class="font-game text-3xl text-indigo-500" id="timer-val">60</span>
+                </div>
+            </div>
+
+            <div class="flex flex-col items-center flex-1 mx-12">
+                <div id="word-display" class="flex gap-2 mb-1">
+                    <!-- Word dashes injected here -->
+                </div>
+                <p id="game-hint" class="text-xs font-black text-slate-400 uppercase tracking-widest">A common household animal</p>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <div class="flex flex-col items-end mr-4">
+                    <span class="text-[10px] font-black text-slate-400 uppercase">Ink Balance</span>
+                    <span class="font-game text-indigo-500" id="user-ink">1,240</span>
+                </div>
+                <button onclick="confirmExit()" class="px-6 py-3 rounded-2xl bg-red-50 text-red-500 font-black text-xs uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all">Leave</button>
+            </div>
+        </header>
+
+        <!-- SIDEBAR LEFT: Leaderboard -->
+        <aside class="sidebar-left flex flex-col gap-4 min-h-0">
+            <div class="glass-card flex-1 rounded-[32px] p-6 flex flex-col overflow-hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest">Leaderboard</h3>
+                    <span class="bg-indigo-100 text-indigo-600 px-2 py-1 rounded-lg text-[10px] font-black" id="player-count">0/8</span>
+                </div>
+                <div id="player-list" class="flex-1 overflow-y-auto space-y-4 custom-scroll pr-2">
+                    <!-- Player Cards -->
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN: Canvas -->
+        <main class="relative flex flex-col gap-4">
+            <div id="canvas-container" class="flex-1 glass-card rounded-[40px] p-2 overflow-hidden border-4 border-white shadow-inner relative">
+                <canvas id="game-canvas" class="canvas-bg w-full h-full rounded-[32px] cursor-crosshair"></canvas>
+                
+                <!-- Floating Drawing Toolbar -->
+                <div id="draw-tools" class="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-white/95 backdrop-blur shadow-2xl p-4 rounded-3xl border border-slate-100 animate-float hidden">
+                    <div class="flex gap-2 border-r pr-4 border-slate-100">
+                        <button class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 tool-btn active" data-tool="brush" onclick="setTool('brush')"><i class="fas fa-pencil-alt"></i></button>
+                        <button class="w-12 h-12 rounded-2xl bg-slate-50 text-slate-400 tool-btn" data-tool="eraser" onclick="setTool('eraser')"><i class="fas fa-eraser"></i></button>
+                        <button class="w-12 h-12 rounded-2xl bg-slate-50 text-slate-400 tool-btn" onclick="fillCanvas()"><i class="fas fa-fill-drip"></i></button>
+                    </div>
+
+                    <div class="flex gap-1.5 px-2 overflow-x-auto max-w-[200px] no-scrollbar" id="color-palette">
+                        <!-- Colors injected -->
+                    </div>
+
+                    <div class="flex flex-col gap-2 w-32 border-l pl-4 border-slate-100">
+                        <input type="range" id="size-slider" min="2" max="60" value="8" class="accent-indigo-500">
+                        <div class="flex justify-between text-[10px] font-black text-slate-400 uppercase">
+                            <span>Size</span>
+                            <span id="size-label">8px</span>
+                        </div>
+                    </div>
+
+                    <button onclick="clearCanvas()" class="w-12 h-12 rounded-2xl bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-all"><i class="fas fa-trash-alt"></i></button>
+                </div>
+
+                <!-- Game Overlays -->
+                <div id="overlay-waiting" class="absolute inset-0 z-20 bg-slate-950/80 backdrop-blur-md flex flex-col items-center justify-center text-white">
+                    <div class="w-24 h-24 border-8 border-indigo-500 border-t-transparent rounded-full animate-spin mb-8"></div>
+                    <h2 class="text-4xl font-game mb-2">Preparing Canvas</h2>
+                    <p class="text-slate-400 font-bold uppercase tracking-widest">Gathering creative minds...</p>
+                </div>
+
+                <div id="overlay-picking" class="absolute inset-0 z-30 bg-indigo-600/95 backdrop-blur-lg flex flex-col items-center justify-center text-white hidden">
+                    <p class="text-indigo-200 font-black uppercase tracking-[0.4em] mb-6">It's your turn!</p>
+                    <h2 class="text-5xl font-game mb-12">Pick a Secret Word</h2>
+                    <div class="flex gap-6" id="word-choices">
+                        <!-- Word buttons -->
+                    </div>
+                </div>
+
+                <div id="overlay-results" class="absolute inset-0 z-40 bg-slate-950/90 backdrop-blur-xl flex flex-col items-center justify-center text-white hidden">
+                    <p class="text-slate-400 font-black uppercase tracking-widest mb-4">The word was</p>
+                    <h2 id="result-word" class="text-7xl font-game text-amber-400 mb-12 drop-shadow-lg">GUITAR</h2>
+                    <div id="result-list" class="w-full max-w-md space-y-3">
+                        <!-- Round winners -->
+                    </div>
+                    <button class="mt-12 text-indigo-400 font-bold animate-pulse">Next round starts soon...</button>
+                </div>
+            </div>
+        </main>
+
+        <!-- SIDEBAR RIGHT: Chat -->
+        <aside class="flex flex-col gap-4 min-h-0">
+            <div class="glass-card flex-1 rounded-[32px] overflow-hidden flex flex-col">
+                <div class="p-4 border-b border-slate-50 bg-slate-50/50 flex items-center justify-between">
+                    <span class="text-xs font-black text-slate-400 uppercase tracking-widest">Chat Stream</span>
+                    <i class="fas fa-comment-dots text-slate-300"></i>
+                </div>
+                <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-3 custom-scroll">
+                    <!-- Chat bubbles -->
+                </div>
+                <div class="p-4 bg-white border-t border-slate-50">
+                    <div class="relative">
+                        <input type="text" id="chat-input" autocomplete="off" placeholder="Type your guess..." class="w-full p-4 pr-12 rounded-2xl bg-slate-50 border-2 border-slate-100 focus:border-indigo-500 outline-none font-bold transition-all">
+                        <button class="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 text-indigo-500"><i class="fas fa-paper-plane"></i></button>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- ========================================== -->
+    <!--                SHOP MODAL                  -->
+    <!-- ========================================== -->
+    <div id="modal-shop" class="fixed inset-0 z-[100] flex items-center justify-center hidden p-4">
+        <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onclick="closeShop()"></div>
+        <div class="w-full max-w-6xl h-[85vh] bg-white rounded-[40px] shadow-2xl relative z-10 overflow-hidden flex flex-col animate-float">
+            <div class="p-10 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <div>
+                    <h2 class="text-5xl font-game text-slate-800">Boutique</h2>
+                    <p class="text-slate-400 font-bold">Customize your artistic journey</p>
+                </div>
+                <div class="flex gap-6 items-center">
+                    <div class="flex items-center gap-3 bg-indigo-50 px-6 py-3 rounded-2xl border border-indigo-100">
+                        <i class="fas fa-tint text-indigo-500 text-xl"></i>
+                        <span class="font-game text-2xl text-indigo-600" id="shop-ink-count">1,240</span>
+                    </div>
+                    <button onclick="closeShop()" class="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center text-xl hover:bg-red-50 hover:text-red-500 transition-colors">✕</button>
+                </div>
+            </div>
+
+            <div class="flex-1 flex overflow-hidden">
+                <div class="w-64 bg-slate-50 p-6 flex flex-col gap-3 border-r border-slate-100">
+                    <button onclick="changeShopTab('avatars')" class="shop-tab-btn active text-left p-4 rounded-2xl font-black text-sm uppercase tracking-widest text-indigo-600 bg-white shadow-sm border border-indigo-100" data-tab="avatars">
+                        <i class="fas fa-ghost mr-3"></i> Avatars
+                    </button>
+                    <button onclick="changeShopTab('accessories')" class="shop-tab-btn text-left p-4 rounded-2xl font-black text-sm uppercase tracking-widest text-slate-400 hover:bg-slate-100" data-tab="accessories">
+                        <i class="fas fa-hat-wizard mr-3"></i> Headwear
+                    </button>
+                    <button onclick="changeShopTab('effects')" class="shop-tab-btn text-left p-4 rounded-2xl font-black text-sm uppercase tracking-widest text-slate-400 hover:bg-slate-100" data-tab="effects">
+                        <i class="fas fa-magic mr-3"></i> Effects
+                    </button>
+                </div>
+
+                <div id="shop-grid" class="flex-1 p-10 overflow-y-auto grid grid-cols-4 gap-6 content-start custom-scroll">
+                    <!-- Shop Items -->
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
-        // --- CONSTANTS & STATE ---
-        const BASES = ["🐱", "🐶", "🐻", "🦊", "🦁", "🐸", "🐼", "🐨", "🐷"];
-        const ACCESSORIES = ["🎩", "👑", "👒", "🎓", "🎀", "🕶️", "🎨", "🚀", "🔥", "💎"];
-        
-        let socket;
-        let myData = {
-            name: localStorage.getItem('sketch_name') || "Player" + Math.floor(Math.random() * 1000),
-            base: localStorage.getItem('sketch_base') || "🐱",
-            accessory: localStorage.getItem('sketch_acc') || "🎩",
-            wins: parseInt(localStorage.getItem('sketch_wins')) || 0,
-            totalPoints: parseInt(localStorage.getItem('sketch_points')) || 0
-        };
+        /**
+         * SKETCHDASH PRO - CORE ENGINE
+         * Total Lines Target: Expanded to manage game flow, shop, and sophisticated drawing.
+         */
 
-        const canvas = document.getElementById('drawing-canvas');
-        const ctx = canvas.getContext('2d');
-        let isDrawing = false;
-        let lastPos = { x: 0, y: 0 };
-        let brushColor = "#000000";
-        let brushSize = 5;
-        let amIDrawing = false;
+        // --- GAME DATA ---
+        const WORDS = ["APPLE", "GUITAR", "ELEPHANT", "PIZZA", "BICYCLE", "AIRPLANE", "DRAGON", "CHESS", "VOLCANO", "LIGHTHOUSE", "PENGUIN", "SUBMARINE", "EINSTEIN", "SKYSCRAPER", "MEDUSA", "FIREWORKS", "ASTRONAUT", "CAVE", "ZEBRA", "DIAMOND"];
+        const COLORS = ["#000000", "#ef4444", "#3b82f6", "#10b981", "#f59e0b", "#ec4899", "#8b5cf6", "#06b6d4", "#71717a", "#ffffff"];
+        
+        const GameState = {
+            socket: null,
+            userId: null,
+            username: "Artist_" + Math.floor(Math.random() * 9000),
+            ink: 1240,
+            rank: 4201,
+            level: 1,
+            inventory: {
+                avatars: ['🐱', '🐶', '🦊'],
+                accessories: ['👑', '🎩', '🕶️'],
+                equipped: { avatar: '🐱', accessory: '👑' }
+            },
+            currentRound: 1,
+            timer: 60,
+            isMyTurn: false,
+            activeWord: "",
+            canvas: null,
+            ctx: null,
+            drawing: {
+                isDrawing: false,
+                tool: 'brush',
+                color: '#000000',
+                size: 8,
+                lastPos: { x: 0, y: 0 }
+            },
+            players: [],
+            messages: []
+        };
 
         // --- INITIALIZATION ---
-        window.onload = () => {
-            updateLobbyPreview();
-            document.getElementById('username-input').value = myData.name;
-            document.getElementById('persistent-wins').innerText = myData.wins;
-            document.getElementById('persistent-rank').innerText = calculateRank(myData.wins);
+        window.addEventListener('DOMContentLoaded', () => {
+            initApp();
+            setupDrawing();
+            renderPalette();
+            setupChat();
+        });
+
+        function initApp() {
+            GameState.canvas = document.getElementById('game-canvas');
+            GameState.ctx = GameState.canvas.getContext('2d', { alpha: false });
             
-            // Handle Resize
-            window.addEventListener('resize', resizeCanvas);
-            resizeCanvas();
-        };
-
-        function calculateRank(wins) {
-            if (wins >= 250) return "GALLERY GOD";
-            if (wins >= 100) return "ILLUSTRATOR";
-            if (wins >= 40) return "INK MASTER";
-            if (wins >= 15) return "SKETCH ARTIST";
-            if (wins >= 5) return "ROOKIE";
-            return "NOVICE";
+            // Load profile
+            const saved = localStorage.getItem('sketchdash_pro_v1');
+            if (saved) {
+                const data = JSON.parse(saved);
+                GameState.username = data.username || GameState.username;
+                GameState.ink = data.ink || 1240;
+                GameState.inventory = data.inventory || GameState.inventory;
+            }
+            
+            document.getElementById('username-input').value = GameState.username;
+            updateGlobalUI();
+            handleResize();
+            window.addEventListener('resize', handleResize);
         }
 
-        // --- LOBBY LOGIC ---
-        function changeBase() {
-            const idx = BASES.indexOf(myData.base);
-            myData.base = BASES[(idx + 1) % BASES.length];
-            updateLobbyPreview();
-            saveData();
+        function handleResize() {
+            const container = GameState.canvas.parentElement;
+            GameState.canvas.width = container.clientWidth;
+            GameState.canvas.height = container.clientHeight;
+            
+            // Redraw white background
+            GameState.ctx.fillStyle = "white";
+            GameState.ctx.fillRect(0, 0, GameState.canvas.width, GameState.canvas.height);
+            GameState.ctx.lineCap = 'round';
+            GameState.ctx.lineJoin = 'round';
         }
 
-        function changeAccessory() {
-            const idx = ACCESSORIES.indexOf(myData.accessory);
-            myData.accessory = ACCESSORIES[(idx + 1) % ACCESSORIES.length];
-            updateLobbyPreview();
-            saveData();
+        function updateGlobalUI() {
+            document.getElementById('lobby-pfp').innerText = GameState.inventory.equipped.avatar;
+            document.getElementById('lobby-acc').innerText = GameState.inventory.equipped.accessory;
+            document.getElementById('lobby-ink-total').innerText = GameState.ink.toLocaleString();
+            document.getElementById('user-ink').innerText = GameState.ink.toLocaleString();
+            document.getElementById('shop-ink-count').innerText = GameState.ink.toLocaleString();
         }
 
-        function updateLobbyPreview() {
-            document.getElementById('base-emoji').innerText = myData.base;
-            document.getElementById('acc-emoji').innerText = myData.accessory;
-        }
+        // --- DRAWING ENGINE ---
+        function setupDrawing() {
+            const getPos = (e) => {
+                const rect = GameState.canvas.getBoundingClientRect();
+                return {
+                    x: (e.clientX || e.touches?.[0]?.clientX) - rect.left,
+                    y: (e.clientY || e.touches?.[0]?.clientY) - rect.top
+                };
+            };
 
-        function saveData() {
-            localStorage.setItem('sketch_name', myData.name);
-            localStorage.setItem('sketch_base', myData.base);
-            localStorage.setItem('sketch_acc', myData.accessory);
-            localStorage.setItem('sketch_wins', myData.wins);
-            localStorage.setItem('sketch_points', myData.totalPoints);
-        }
+            const start = (e) => {
+                if (!GameState.isMyTurn) return;
+                GameState.drawing.isDrawing = true;
+                GameState.drawing.lastPos = getPos(e);
+            };
 
-        function joinGame() {
-            const nameInput = document.getElementById('username-input').value.trim();
-            if(!nameInput) return;
-            myData.name = nameInput;
-            saveData();
-
-            // Connect to Socket
-            socket = io(); // In production, pass the server URL if different
-
-            socket.on('connect', () => {
-                document.getElementById('lobby-screen').classList.add('hidden');
-                document.getElementById('game-screen').classList.remove('hidden');
-                socket.emit('join_game', myData);
-            });
-
-            setupSocketListeners();
-        }
-
-        function leaveGame() {
-            location.reload();
-        }
-
-        // --- SOCKET LISTENERS ---
-        function setupSocketListeners() {
-            socket.on('player_list_update', (players) => {
-                const list = document.getElementById('player-list');
-                list.innerHTML = players.sort((a,b) => b.score - a.score).map(p => `
-                    <div class="flex items-center gap-3 p-2 rounded-lg bg-slate-800/50 ${p.id === socket.id ? 'border border-indigo-500' : ''} ${p.hasGuessed ? 'bg-green-900/30' : ''}">
-                        <div class="relative w-10 h-10 bg-slate-700 rounded-full flex items-center justify-center text-xl">
-                            ${p.base}
-                            <span class="absolute -top-1 -right-1 text-sm">${p.accessory}</span>
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <div class="font-bold truncate ${p.hasGuessed ? 'text-green-400' : ''}">${p.name}</div>
-                            <div class="text-xs text-slate-400">${p.score} pts • ${p.rank}</div>
-                        </div>
-                    </div>
-                `).join('');
-            });
-
-            socket.on('game_state_update', (state) => {
-                const statusMsg = document.getElementById('game-status-msg');
-                const wordPicker = document.getElementById('word-picker');
-                const toolbar = document.getElementById('toolbar');
-                const intermission = document.getElementById('intermission-overlay');
+            const move = (e) => {
+                if (!GameState.drawing.isDrawing) return;
+                const pos = getPos(e);
                 
-                amIDrawing = state.drawerId === socket.id;
-                document.getElementById('round-display').innerText = `Round ${state.round}/10`;
+                GameState.ctx.beginPath();
+                GameState.ctx.strokeStyle = GameState.drawing.tool === 'eraser' ? '#FFFFFF' : GameState.drawing.color;
+                GameState.ctx.lineWidth = GameState.drawing.size;
+                GameState.ctx.moveTo(GameState.drawing.lastPos.x, GameState.drawing.lastPos.y);
+                GameState.ctx.lineTo(pos.x, pos.y);
+                GameState.ctx.stroke();
 
-                // Status Logic
-                if (state.status === 'waiting') {
-                    statusMsg.innerText = "Waiting for more players...";
-                } else if (state.status === 'selecting') {
-                    statusMsg.innerText = amIDrawing ? "Choose a word!" : "Drawer is choosing...";
-                    if(amIDrawing) {
-                        wordPicker.classList.remove('hidden');
-                        const options = document.getElementById('word-options');
-                        options.innerHTML = state.wordChoices.map(w => `
-                            <button onclick="selectWord('${w}')" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-bold text-lg btn-hover">${w}</button>
-                        `).join('');
-                    } else {
-                        wordPicker.classList.add('hidden');
-                    }
-                    intermission.classList.add('hidden');
-                } else if (state.status === 'active') {
-                    wordPicker.classList.add('hidden');
-                    intermission.classList.add('hidden');
-                    statusMsg.innerText = amIDrawing ? "DRAW THIS!" : "GUESS THE WORD!";
-                    
-                    if(amIDrawing) {
-                        toolbar.classList.remove('hidden');
-                        document.getElementById('word-display').innerText = state.currentWord;
-                    } else {
-                        toolbar.classList.add('hidden');
-                        document.getElementById('word-display').innerText = state.currentWord.replace(/[A-Z]/g, '_ ');
-                    }
-                } else if (state.status === 'intermission') {
-                    toolbar.classList.add('hidden');
-                    intermission.classList.remove('hidden');
-                    document.getElementById('revealed-word').innerText = state.currentWord;
-                    document.getElementById('winner-reveal').innerText = state.winners.length > 0 ? "Correctly guessed by " + state.winners.length + " players!" : "No one got it!";
+                // Network Sync
+                if (GameState.socket?.connected) {
+                    GameState.socket.emit('draw_op', {
+                        x0: GameState.drawing.lastPos.x,
+                        y0: GameState.drawing.lastPos.y,
+                        x1: pos.x,
+                        y1: pos.y,
+                        color: GameState.drawing.color,
+                        size: GameState.drawing.size,
+                        tool: GameState.drawing.tool
+                    });
                 }
-            });
 
-            socket.on('timer_update', (time) => {
-                document.getElementById('timer-text').innerText = time;
-                const ring = document.getElementById('timer-ring');
-                const offset = (time / 60) * 150.8;
-                ring.style.strokeDashoffset = 150.8 - offset;
-            });
+                GameState.drawing.lastPos = pos;
+                if (e.cancelable) e.preventDefault();
+            };
 
-            socket.on('remote_draw', (data) => drawLine(data.x0, data.y0, data.x1, data.y1, data.color, data.size, false));
-            socket.on('remote_clear', () => ctx.clearRect(0, 0, canvas.width, canvas.height));
+            const stop = () => GameState.drawing.isDrawing = false;
 
-            socket.on('correct_guess', (data) => {
-                document.getElementById('sfx-correct').play();
-                addMessage("System", `${data.playerName} guessed the word!`, 'system');
-                if(data.playerId === socket.id) {
-                    document.body.classList.add('correct-guess-flash');
-                    setTimeout(() => document.body.classList.remove('correct-guess-flash'), 1000);
-                }
-            });
-
-            socket.on('new_message', (msg) => addMessage(msg.user, msg.text, msg.type));
+            GameState.canvas.addEventListener('mousedown', start);
+            window.addEventListener('mousemove', move);
+            window.addEventListener('mouseup', stop);
             
-            socket.on('game_win', (winnerId) => {
-                if(winnerId === socket.id) {
-                    myData.wins++;
-                    saveData();
-                    document.getElementById('sfx-win').play();
-                }
-            });
-        }
+            GameState.canvas.addEventListener('touchstart', start, { passive: false });
+            window.addEventListener('touchmove', move, { passive: false });
+            window.addEventListener('touchend', stop);
 
-        // --- CANVAS LOGIC ---
-        function resizeCanvas() {
-            const wrapper = document.getElementById('canvas-wrapper');
-            const rect = wrapper.getBoundingClientRect();
-            // High DPI support
-            const dpr = window.devicePixelRatio || 1;
-            canvas.width = rect.width * dpr;
-            canvas.height = rect.height * dpr;
-            canvas.style.width = rect.width + 'px';
-            canvas.style.height = rect.height + 'px';
-            ctx.scale(dpr, dpr);
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-        }
-
-        function getPos(e) {
-            const rect = canvas.getBoundingClientRect();
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            return {
-                x: clientX - rect.left,
-                y: clientY - rect.top
+            // Controls
+            document.getElementById('size-slider').oninput = (e) => {
+                GameState.drawing.size = e.target.value;
+                document.getElementById('size-label').innerText = e.target.value + 'px';
             };
         }
 
-        canvas.addEventListener('mousedown', startDrawing);
-        canvas.addEventListener('mousemove', draw);
-        canvas.addEventListener('mouseup', stopDrawing);
-        canvas.addEventListener('mouseleave', stopDrawing);
-        canvas.addEventListener('touchstart', startDrawing);
-        canvas.addEventListener('touchmove', draw);
-        canvas.addEventListener('touchend', stopDrawing);
-
-        function startDrawing(e) {
-            if(!amIDrawing) return;
-            isDrawing = true;
-            lastPos = getPos(e);
+        function setTool(t) {
+            GameState.drawing.tool = t;
+            document.querySelectorAll('.tool-btn').forEach(btn => {
+                btn.classList.remove('active', 'bg-indigo-50', 'text-indigo-600');
+                btn.classList.add('bg-slate-50', 'text-slate-400');
+                if (btn.dataset.tool === t) {
+                    btn.classList.add('active', 'bg-indigo-50', 'text-indigo-600');
+                    btn.classList.remove('bg-slate-50', 'text-slate-400');
+                }
+            });
         }
 
-        function draw(e) {
-            if(!isDrawing || !amIDrawing) return;
-            const currentPos = getPos(e);
-            drawLine(lastPos.x, lastPos.y, currentPos.x, currentPos.y, brushColor, brushSize, true);
-            lastPos = currentPos;
+        function renderPalette() {
+            const container = document.getElementById('color-palette');
+            container.innerHTML = COLORS.map(c => `
+                <button class="w-8 h-8 rounded-full shadow-sm border-2 border-white flex-shrink-0 color-swatch" 
+                        style="background: ${c}" 
+                        onclick="setColor('${c}', this)"></button>
+            `).join('');
+            container.children[0].classList.add('tool-active');
         }
 
-        function stopDrawing() {
-            isDrawing = false;
+        function setColor(c, el) {
+            GameState.drawing.color = c;
+            document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('tool-active'));
+            el.classList.add('tool-active');
         }
-
-        function drawLine(x0, y0, x1, y1, color, size, emit) {
-            ctx.beginPath();
-            ctx.moveTo(x0, y0);
-            ctx.lineTo(x1, y1);
-            ctx.strokeStyle = color;
-            ctx.lineWidth = size;
-            ctx.stroke();
-            ctx.closePath();
-
-            if (emit && socket) {
-                socket.emit('draw_stroke', { x0, y0, x1, y1, color, size });
-            }
-        }
-
-        function setBrush(size) { brushSize = size; }
-        document.getElementById('color-picker').oninput = (e) => brushColor = e.target.value;
 
         function clearCanvas() {
-            if(!amIDrawing) return;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            socket.emit('clear_canvas');
+            GameState.ctx.fillStyle = "white";
+            GameState.ctx.fillRect(0, 0, GameState.canvas.width, GameState.canvas.height);
+            if (GameState.socket?.connected) GameState.socket.emit('clear_canvas');
         }
 
-        function selectWord(word) {
-            socket.emit('word_selected', word);
+        function fillCanvas() {
+            GameState.ctx.fillStyle = GameState.drawing.color;
+            GameState.ctx.fillRect(0, 0, GameState.canvas.width, GameState.canvas.height);
+            if (GameState.socket?.connected) GameState.socket.emit('fill_canvas', GameState.drawing.color);
         }
 
-        // --- CHAT LOGIC ---
-        const chatForm = document.getElementById('chat-form');
-        const chatInput = document.getElementById('chat-input');
-        const chatContainer = document.getElementById('chat-messages');
+        // --- CHAT SYSTEM ---
+        function setupChat() {
+            const input = document.getElementById('chat-input');
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    const val = input.value.trim();
+                    if (!val) return;
+                    
+                    if (GameState.socket?.connected) {
+                        GameState.socket.emit('chat_msg', val);
+                    } else {
+                        // Mock local chat
+                        handleMessage({ user: GameState.username, text: val, type: 'user' });
+                    }
+                    input.value = '';
+                }
+            });
+        }
 
-        chatForm.onsubmit = (e) => {
-            e.preventDefault();
-            const val = chatInput.value.trim();
-            if(val) {
-                socket.emit('send_message', val);
-                chatInput.value = '';
+        function handleMessage(m) {
+            const container = document.getElementById('chat-messages');
+            const bubble = document.createElement('div');
+            bubble.className = "animate-slide";
+            
+            if (m.type === 'system') {
+                bubble.innerHTML = `<div class="bg-indigo-50 text-indigo-600 text-center text-[10px] font-black uppercase py-2 rounded-xl border border-indigo-100">${m.text}</div>`;
+            } else {
+                bubble.innerHTML = `
+                    <div class="flex flex-col ${m.user === GameState.username ? 'items-end' : 'items-start'}">
+                        <span class="text-[10px] font-black text-slate-400 uppercase ml-2 mb-1">${m.user}</span>
+                        <div class="max-w-[80%] p-3 rounded-2xl font-bold text-sm ${m.user === GameState.username ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-slate-100 text-slate-700 rounded-tl-none'}">
+                            ${m.text}
+                        </div>
+                    </div>
+                `;
             }
+
+            container.appendChild(bubble);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // --- GAME FLOW ---
+        function enterQueue() {
+            GameState.username = document.getElementById('username-input').value.trim() || GameState.username;
+            localStorage.setItem('sketchdash_pro_v1', JSON.stringify({
+                username: GameState.username,
+                ink: GameState.ink,
+                inventory: GameState.inventory
+            }));
+
+            // Mocking transition for Demo
+            document.getElementById('screen-lobby').classList.add('hidden');
+            document.getElementById('screen-game').classList.remove('hidden');
+            
+            // Logic to connect to socket usually goes here
+            // For now, we simulate a "Wait for players" then "Select Word"
+            setTimeout(() => {
+                document.getElementById('overlay-waiting').classList.add('hidden');
+                startTurn();
+            }, 2000);
+        }
+
+        function startTurn() {
+            GameState.isMyTurn = true;
+            document.getElementById('overlay-picking').classList.remove('hidden');
+            document.getElementById('draw-tools').classList.remove('hidden');
+            
+            const choices = document.getElementById('word-choices');
+            const turnWords = [WORDS[Math.floor(Math.random()*WORDS.length)], WORDS[Math.floor(Math.random()*WORDS.length)], WORDS[Math.floor(Math.random()*WORDS.length)]];
+            
+            choices.innerHTML = turnWords.map(w => `
+                <button onclick="pickWord('${w}')" class="btn-neo bg-white text-indigo-600 px-10 py-5 rounded-3xl font-game text-2xl border-4 border-indigo-100 hover:border-indigo-400">${w}</button>
+            `).join('');
+        }
+
+        function pickWord(w) {
+            GameState.activeWord = w;
+            document.getElementById('overlay-picking').classList.add('hidden');
+            
+            // Render underscores
+            const display = document.getElementById('word-display');
+            display.innerHTML = w.split('').map(char => `
+                <div class="w-10 h-12 border-b-4 border-slate-300 flex items-center justify-center font-game text-3xl text-indigo-600">${char}</div>
+            `).join('');
+
+            startTimer();
+            handleMessage({ text: `You are drawing: ${w}`, type: 'system' });
+        }
+
+        let timerInt;
+        function startTimer() {
+            GameState.timer = 60;
+            clearInterval(timerInt);
+            timerInt = setInterval(() => {
+                GameState.timer--;
+                document.getElementById('timer-val').innerText = GameState.timer;
+                if (GameState.timer <= 0) {
+                    clearInterval(timerInt);
+                    endTurn();
+                }
+            }, 1000);
+        }
+
+        function endTurn() {
+            GameState.isMyTurn = false;
+            document.getElementById('draw-tools').classList.add('hidden');
+            document.getElementById('overlay-results').classList.remove('hidden');
+            document.getElementById('result-word').innerText = GameState.activeWord;
+            
+            setTimeout(() => {
+                document.getElementById('overlay-results').classList.add('hidden');
+                clearCanvas();
+                // Sequence for next round...
+            }, 4000);
+        }
+
+        function confirmExit() {
+            if(confirm("Exit game? Your current round score will be lost.")) {
+                location.reload();
+            }
+        }
+
+        // --- SHOP & CUSTOMIZATION ---
+        const SHOP_DATABASE = {
+            avatars: [
+                { id: 'cat', item: '🐱', price: 0, owned: true },
+                { id: 'dog', item: '🐶', price: 0, owned: true },
+                { id: 'fox', item: '🦊', price: 150, owned: false },
+                { id: 'lion', item: '🦁', price: 300, owned: false },
+                { id: 'dragon', item: '🐲', price: 1000, owned: false },
+                { id: 'alien', item: '👽', price: 500, owned: false },
+                { id: 'robot', item: '🤖', price: 400, owned: false },
+                { id: 'unicorn', item: '🦄', price: 2000, owned: false }
+            ],
+            accessories: [
+                { id: 'none', item: ' ', price: 0, owned: true },
+                { id: 'crown', item: '👑', price: 500, owned: false },
+                { id: 'hat', item: '🎩', price: 200, owned: false },
+                { id: 'cool', item: '🕶️', price: 100, owned: false },
+                { id: 'fire', item: '🔥', price: 800, owned: false },
+                { id: 'halo', item: '😇', price: 1500, owned: false }
+            ]
         };
 
-        function addMessage(user, text, type) {
-            const div = document.createElement('div');
-            div.className = `chat-bubble p-2 rounded-lg ${type === 'system' ? 'bg-indigo-900/30 text-indigo-300 italic' : 'bg-slate-800'}`;
-            div.innerHTML = `<strong>${user}:</strong> ${text}`;
-            chatContainer.appendChild(div);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
+        function openShop() {
+            document.getElementById('modal-shop').classList.remove('hidden');
+            changeShopTab('avatars');
         }
+
+        function closeShop() {
+            document.getElementById('modal-shop').classList.add('hidden');
+            updateGlobalUI();
+        }
+
+        function changeShopTab(tab) {
+            document.querySelectorAll('.shop-tab-btn').forEach(btn => {
+                btn.classList.remove('active', 'text-indigo-600', 'bg-white', 'shadow-sm', 'border-indigo-100');
+                btn.classList.add('text-slate-400');
+                if (btn.dataset.tab === tab) {
+                    btn.classList.add('active', 'text-indigo-600', 'bg-white', 'shadow-sm', 'border-indigo-100');
+                    btn.classList.remove('text-slate-400');
+                }
+            });
+
+            const grid = document.getElementById('shop-grid');
+            const items = SHOP_DATABASE[tab] || [];
+            
+            grid.innerHTML = items.map(i => {
+                const isOwned = GameState.inventory[tab]?.includes(i.item) || i.owned;
+                const isEquipped = GameState.inventory.equipped[tab === 'avatars' ? 'avatar' : 'accessory'] === i.item;
+                
+                return `
+                    <div class="bg-slate-50 border-2 rounded-3xl p-6 flex flex-col items-center gap-4 transition-all ${isEquipped ? 'border-indigo-500 bg-indigo-50/50' : 'border-slate-100'}">
+                        <div class="text-6xl animate-float" style="animation-delay: ${Math.random()}s">${i.item}</div>
+                        <div class="text-center">
+                            <div class="text-xs font-black text-slate-400 uppercase tracking-widest">${i.id}</div>
+                            ${!isOwned ? `
+                                <button onclick="buyItem('${tab}', '${i.id}')" class="mt-4 px-6 py-2 bg-indigo-600 text-white rounded-xl font-game text-sm flex items-center gap-2">
+                                    <i class="fas fa-tint text-[10px]"></i> ${i.price}
+                                </button>
+                            ` : `
+                                <button onclick="equipItem('${tab}', '${i.item}')" class="mt-4 px-6 py-2 ${isEquipped ? 'bg-indigo-500 text-white' : 'bg-white text-slate-600 border border-slate-200'} rounded-xl font-game text-sm">
+                                    ${isEquipped ? 'Equipped' : 'Equip'}
+                                </button>
+                            `}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function buyItem(category, id) {
+            const item = SHOP_DATABASE[category].find(x => x.id === id);
+            if (GameState.ink >= item.price) {
+                GameState.ink -= item.price;
+                if(!GameState.inventory[category]) GameState.inventory[category] = [];
+                GameState.inventory[category].push(item.item);
+                saveProfile();
+                changeShopTab(category);
+                updateGlobalUI();
+                alert(`Successfully purchased ${id}!`);
+            } else {
+                alert("Not enough Ink! Play games to earn more.");
+            }
+        }
+
+        function equipItem(category, item) {
+            const type = category === 'avatars' ? 'avatar' : 'accessory';
+            GameState.inventory.equipped[type] = item;
+            saveProfile();
+            changeShopTab(category);
+            updateGlobalUI();
+        }
+
+        function saveProfile() {
+            localStorage.setItem('sketchdash_pro_v1', JSON.stringify({
+                username: GameState.username,
+                ink: GameState.ink,
+                inventory: GameState.inventory
+            }));
+        }
+
+        function openCustomizer() {
+            openShop();
+        }
+
+        // --- MOCK PLAYERS ---
+        const MOCK_NAMES = ["BrushMaster", "DoodleKing", "PixelWizard", "SketchyCat", "ArtVandalay", "ColorCrush"];
+        function populatePlayers() {
+            const list = document.getElementById('player-list');
+            const players = MOCK_NAMES.slice(0, 6).map((name, i) => ({
+                name,
+                score: Math.floor(Math.random() * 500),
+                pfp: GameState.inventory.avatars[i % 3],
+                rank: i === 0 ? 'LEGEND' : 'ROOKIE'
+            }));
+
+            list.innerHTML = players.sort((a,b) => b.score - a.score).map((p, i) => `
+                <div class="flex items-center gap-4 p-4 rounded-2xl bg-white border border-slate-100 shadow-sm transition-transform hover:scale-[1.02]">
+                    <div class="relative">
+                        <div class="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-2xl">${p.pfp}</div>
+                        <div class="absolute -top-2 -left-2 w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[10px] font-black">${i+1}</div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold text-slate-800 truncate text-sm">${p.name}</span>
+                            <span class="text-[8px] font-black text-white bg-amber-400 px-1.5 py-0.5 rounded-full">${p.rank}</span>
+                        </div>
+                        <div class="text-[10px] font-black text-indigo-500 uppercase">${p.score} Points</div>
+                    </div>
+                    <div class="text-green-500"><i class="fas fa-check-circle"></i></div>
+                </div>
+            `).join('');
+            document.getElementById('player-count').innerText = `${players.length + 1}/8`;
+        }
+        
+        // Final UI Polish on load
+        setTimeout(() => {
+            populatePlayers();
+            handleMessage({ text: "Welcome to SketchDash Pro Server!", type: 'system' });
+        }, 500);
+
     </script>
 </body>
 </html>
