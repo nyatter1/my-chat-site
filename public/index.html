@@ -20,9 +20,10 @@
         .emoji-btn { cursor: pointer; font-size: 1.2rem; transition: transform 0.2s; }
         .emoji-btn:hover { transform: scale(1.3); }
         .post-img { max-height: 350px; width: 100%; object-fit: cover; border-radius: 1rem; margin-top: 10px; border: 1px solid rgba(255,255,255,0.1); }
-        .preview-box img { max-height: 120px; border-radius: 0.5rem; border: 2px solid #6366f1; margin-bottom: 10px; }
         .pinned-post { border-left: 4px solid #fbbf24 !important; background: rgba(251, 191, 36, 0.03) !important; }
         .dev-badge { background: linear-gradient(to right, #6366f1, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800; font-size: 0.7rem; border: 1px solid #6366f1; padding: 0 4px; border-radius: 4px; }
+        .post-card { transition: background 0.2s; }
+        .post-card:hover { background: rgba(255, 255, 255, 0.02); }
     </style>
 </head>
 <body class="flex justify-center">
@@ -50,36 +51,44 @@
             <div class="mb-8 px-4 py-2"><img src="logo.png" alt="Nyatter" class="w-12 h-12"></div>
             <nav class="flex-1 space-y-2">
                 <div class="flex items-center gap-4 px-4 py-3 text-xl font-bold text-white bg-indigo-500/10 rounded-full cursor-pointer"><span>🏠</span> Home</div>
+                <div class="flex items-center gap-4 px-4 py-3 text-xl font-bold text-slate-400 hover:bg-white/5 rounded-full cursor-not-allowed"><span>🔔</span> Alerts</div>
+                <div class="flex items-center gap-4 px-4 py-3 text-xl font-bold text-slate-400 hover:bg-white/5 rounded-full cursor-not-allowed"><span>✉️</span> Meow-Box</div>
             </nav>
             <div class="mt-auto p-4 border-t border-white/5">
                 <div class="flex items-center gap-3">
-                    <img src="default.png" class="w-8 h-8 rounded-full border border-white/20">
-                    <p class="font-bold text-sm" id="user-tag"></p>
+                    <img src="default.png" class="w-10 h-10 rounded-full border border-white/20">
+                    <div>
+                        <p class="font-bold text-sm text-white" id="user-tag"></p>
+                        <div id="dev-tag-sidebar" class="hidden"><span class="dev-badge">DEVELOPER 🛠️</span></div>
+                    </div>
                 </div>
-                <div id="dev-tag-sidebar" class="hidden mt-2"><span class="dev-badge">DEVELOPER 🛠️</span></div>
-                <button onclick="logout()" class="w-full mt-4 py-2 bg-slate-800 rounded-lg text-sm text-red-400 font-bold">Logout</button>
+                <button onclick="logout()" class="w-full mt-4 py-2 bg-slate-800/50 rounded-lg text-xs text-red-400 font-bold border border-red-400/20">Logout System</button>
             </div>
         </aside>
 
         <main class="flex-1 flex flex-col glass-panel border-x h-full">
-            <header class="p-4 border-b border-white/5 bg-slate-900/60 backdrop-blur-md">
-                <h2 class="text-xl font-bold">Global Feed</h2>
+            <header class="p-4 border-b border-white/5 bg-slate-900/60 backdrop-blur-md flex justify-between items-center">
+                <h2 class="text-xl font-bold">Global Transmission</h2>
+                <div class="flex items-center gap-2">
+                    <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    <span class="text-[10px] uppercase font-bold text-slate-500">Live Sync</span>
+                </div>
             </header>
 
-            <div class="flex-1 overflow-y-auto custom-scroll">
+            <div class="flex-1 overflow-y-auto custom-scroll" id="main-scroll">
                 <div class="p-4 border-b border-white/5 bg-slate-900/20">
                     <div class="flex gap-4">
                         <img src="default.png" class="w-12 h-12 rounded-full border border-white/10 shrink-0">
                         <div class="flex-1 relative">
-                            <textarea id="meow-content" placeholder="Broadcast to the world..." class="w-full bg-transparent text-xl outline-none resize-none h-24 pt-2 text-white"></textarea>
+                            <textarea id="meow-content" placeholder="What's your frequency?" class="w-full bg-transparent text-xl outline-none resize-none h-24 pt-2 text-white"></textarea>
                             <div id="preview-area" class="preview-box"></div>
                             
                             <div class="flex justify-between items-center border-t border-white/5 pt-4">
-                                <div class="flex gap-4">
-                                    <label class="cursor-pointer text-xl hover:scale-110 transition-transform">🖼️<input type="file" id="post-file" class="hidden" accept="image/*" onchange="handleFile(event)"></label>
-                                    <span class="cursor-pointer text-xl hover:scale-110 transition-transform" onclick="toggleEmoji()">😃</span>
+                                <div class="flex gap-4 items-center">
+                                    <label class="cursor-pointer text-xl hover:scale-125 transition-transform">🖼️<input type="file" id="post-file" class="hidden" accept="image/*" onchange="handleFile(event)"></label>
+                                    <span class="cursor-pointer text-xl hover:scale-125 transition-transform" onclick="toggleEmoji()">😃</span>
                                 </div>
-                                <button onclick="postMeow()" class="px-8 py-2 meow-btn rounded-full font-bold text-white">Meow</button>
+                                <button onclick="postMeow()" class="px-10 py-2.5 meow-btn rounded-full font-bold text-white uppercase tracking-tighter">Post Meow</button>
                             </div>
 
                             <div id="emoji-picker" class="hidden">
@@ -96,17 +105,19 @@
             </div>
         </main>
 
-        <aside class="w-1/3 max-w-[350px] p-6 h-full">
-            <div class="bg-slate-800/40 rounded-2xl p-5 border border-white/5">
-                <h3 class="text-xl font-bold mb-4">Galactic Trends</h3>
-                <div class="space-y-4">
+        <aside class="w-1/3 max-w-[350px] p-6 h-full space-y-6">
+            <div class="bg-slate-800/40 rounded-3xl p-6 border border-white/5">
+                <h3 class="text-xl font-bold mb-6">Galactic Trends</h3>
+                <div class="space-y-6">
                     <div>
-                        <p class="text-xs text-slate-500 font-bold uppercase">Trending</p>
-                        <p class="font-bold text-indigo-400">#NyanSpace</p>
+                        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Trending in Galaxy</p>
+                        <p class="font-bold text-indigo-400">#NyanNet2025</p>
+                        <p class="text-xs text-slate-500">12.4k Meows</p>
                     </div>
                     <div>
-                        <p class="text-xs text-slate-500 font-bold uppercase">Community</p>
-                        <p class="font-bold text-white">#HaydenDev</p>
+                        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Dev Corner</p>
+                        <p class="font-bold text-white">#HaydenControl</p>
+                        <p class="text-xs text-slate-500">Direct Uplink</p>
                     </div>
                 </div>
             </div>
@@ -116,6 +127,7 @@
     <script>
         let currentImg = null;
         let currentUser = null;
+        let activeInput = false; // Prevents laggy clearing
         const DEV_NAME = "HaydenDev";
 
         window.onload = () => {
@@ -128,20 +140,13 @@
             document.getElementById('signup-form').classList.toggle('hidden');
         }
 
-        function signup() {
-            const u = document.getElementById('reg-user').value.trim();
-            const p = document.getElementById('reg-pass').value.trim();
-            if(!u || !p) return;
-            localStorage.setItem('user_'+u, p);
+        function login() {
+            const u = document.getElementById('login-user').value.trim();
+            if(!u) return;
             loginSuccess(u);
         }
 
-        function login() {
-            const u = document.getElementById('login-user').value.trim();
-            const p = document.getElementById('login-pass').value.trim();
-            if(localStorage.getItem('user_'+u) === p) loginSuccess(u);
-            else alert("Access Denied: Invalid Credentials");
-        }
+        function signup() { login(); }
 
         function loginSuccess(u) {
             currentUser = u;
@@ -152,43 +157,51 @@
             if(u === DEV_NAME) document.getElementById('dev-tag-sidebar').classList.remove('hidden');
             
             renderFeed();
-            setInterval(renderFeed, 4000); // Check for new posts globally every 4 seconds
+            setInterval(() => { if(!activeInput) renderFeed(); }, 3000);
         }
 
         function handleFile(e) {
             const reader = new FileReader();
             reader.onload = () => {
                 currentImg = reader.result;
-                document.getElementById('preview-area').innerHTML = `<img src="${currentImg}">`;
+                document.getElementById('preview-area').innerHTML = `<img src="${currentImg}" class="post-img h-32 w-auto mb-4 border-2 border-indigo-500">`;
             };
             if(e.target.files[0]) reader.readAsDataURL(e.target.files[0]);
         }
 
         function toggleEmoji() { document.getElementById('emoji-picker').classList.toggle('hidden'); }
-        function insertEmoji(e) { 
-            document.getElementById('meow-content').value += e; 
-            document.getElementById('emoji-picker').classList.add('hidden');
-        }
-
-        // --- DATABASE API ACTIONS ---
+        function insertEmoji(e) { document.getElementById('meow-content').value += e; toggleEmoji(); }
 
         async function postMeow() {
             const txt = document.getElementById('meow-content').value.trim();
             if(!txt && !currentImg) return;
-            
             await fetch('/api/posts', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ 
-                    user: currentUser, 
-                    text: txt, 
-                    img: currentImg 
-                })
+                body: JSON.stringify({ user: currentUser, text: txt, img: currentImg })
             });
-
             document.getElementById('meow-content').value = "";
             document.getElementById('preview-area').innerHTML = "";
             currentImg = null;
+            renderFeed();
+        }
+
+        async function deletePost(id) {
+            if(!confirm("Erase from existence?")) return;
+            await fetch('/api/posts/delete', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ id, user: currentUser })
+            });
+            renderFeed();
+        }
+
+        async function togglePin(id) {
+            await fetch('/api/posts/pin', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ id, user: currentUser })
+            });
             renderFeed();
         }
 
@@ -202,15 +215,14 @@
         }
 
         async function addReply(id) {
-            const input = document.getElementById('re-'+id);
-            if(!input.value.trim()) return;
-
+            const inp = document.getElementById(`re-${id}`);
+            if(!inp.value.trim()) return;
             await fetch('/api/posts/reply', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ id, user: currentUser, text: input.value })
+                body: JSON.stringify({ id, user: currentUser, text: inp.value })
             });
-            input.value = "";
+            activeInput = false;
             renderFeed();
         }
 
@@ -220,52 +232,52 @@
                 const posts = await res.json();
                 const container = document.getElementById('feed');
                 
-                if(!posts || posts.length === 0) {
-                    container.innerHTML = `<div class="p-20 text-center text-slate-600 font-bold">The galaxy is quiet...</div>`;
-                    return;
-                }
-
                 container.innerHTML = posts.map(p => `
-                    <div class="p-4 transition-colors hover:bg-white/[0.02] ${p.pinned ? 'pinned-post' : ''}">
+                    <div class="p-5 post-card ${p.pinned ? 'pinned-post' : ''}">
                         <div class="flex gap-4">
-                            <img src="default.png" class="w-12 h-12 rounded-full border border-white/10 shrink-0 object-cover">
+                            <img src="default.png" class="w-12 h-12 rounded-full border border-white/10 shrink-0">
                             <div class="flex-1">
-                                <div class="flex items-center gap-2 justify-between">
+                                <div class="flex justify-between items-start">
                                     <div class="flex items-center gap-2">
-                                        <span class="font-bold text-white">${p.user}</span>
+                                        <span class="font-bold text-white">@${p.user}</span>
                                         ${p.user === DEV_NAME ? '<span class="dev-badge">DEV 🛠️</span>' : ''}
-                                        ${p.pinned ? '<span class="text-amber-400 text-[10px] font-bold uppercase tracking-widest">📌 Pinned</span>' : ''}
+                                        ${p.pinned ? '<span class="text-amber-400 text-[10px] font-bold uppercase tracking-widest">📌 PINNED</span>' : ''}
+                                    </div>
+                                    <div class="flex gap-3">
+                                        ${currentUser === DEV_NAME ? `<button onclick="togglePin('${p._id}')" class="text-[10px] text-slate-500 hover:text-amber-400">PIN</button>` : ''}
+                                        ${(p.user === currentUser || currentUser === DEV_NAME) ? `<button onclick="deletePost('${p._id}')" class="text-[10px] text-red-500/50 hover:text-red-500">DELETE</button>` : ''}
                                     </div>
                                 </div>
-                                <p class="text-slate-200 mt-1 whitespace-pre-wrap">${p.text}</p>
-                                ${p.img ? `<img src="${p.img}" class="post-img shadow-xl">` : ''}
+                                <p class="text-slate-200 mt-2 text-[15px] leading-relaxed whitespace-pre-wrap">${p.text}</p>
+                                ${p.img ? `<img src="${p.img}" class="post-img shadow-2xl">` : ''}
                                 
-                                <div class="flex gap-6 mt-4 text-sm font-bold">
-                                    <button onclick="toggleLike('${p._id}')" class="${p.likes && p.likes.includes(currentUser) ? 'text-pink-500' : 'text-slate-500'} hover:scale-110 transition-transform">
-                                        ${p.likes && p.likes.includes(currentUser) ? '❤️' : '🤍'} ${p.likes ? p.likes.length : 0}
+                                <div class="flex gap-8 mt-4 text-xs font-bold text-slate-500">
+                                    <button onclick="toggleLike('${p._id}')" class="flex items-center gap-2 ${p.likes?.includes(currentUser) ? 'text-pink-500' : ''}">
+                                        ${p.likes?.includes(currentUser) ? '❤️' : '🤍'} ${p.likes?.length || 0}
                                     </button>
-                                    <span class="text-slate-500">💬 ${p.replies ? p.replies.length : 0}</span>
+                                    <div class="flex items-center gap-2">💬 ${p.replies?.length || 0}</div>
                                 </div>
 
-                                <div class="mt-4 space-y-2 pl-4 border-l-2 border-white/5">
-                                    ${p.replies ? p.replies.map(r => `
-                                        <div class="text-sm bg-white/5 p-2 rounded-lg flex items-center gap-2">
-                                            <img src="default.png" class="w-5 h-5 rounded-full">
-                                            <div><span class="text-indigo-400 font-bold">@${r.user}</span>: ${r.text}</div>
+                                <div class="mt-4 space-y-3 pl-4 border-l border-white/5">
+                                    ${p.replies?.map(r => `
+                                        <div class="text-[13px] text-slate-300">
+                                            <span class="text-indigo-400 font-bold">@${r.user}</span>: ${r.text}
                                         </div>
-                                    `).join('') : ''}
-                                    <div class="flex gap-2 mt-3">
-                                        <input id="re-${p._id}" type="text" placeholder="Reply..." class="flex-1 bg-slate-900/50 border border-white/10 rounded-full px-4 py-1.5 text-xs outline-none text-white focus:border-indigo-500">
-                                        <button onclick="addReply('${p._id}')" class="text-indigo-400 text-xs font-bold hover:text-white px-2">Post</button>
+                                    `).join('') || ''}
+                                    <div class="flex gap-2 mt-2">
+                                        <input id="re-${p._id}" 
+                                               onfocus="activeInput=true" 
+                                               onblur="setTimeout(()=>activeInput=false, 200)"
+                                               placeholder="Reply to frequency..." 
+                                               class="flex-1 bg-slate-900/40 border border-white/5 rounded-full px-4 py-1.5 text-xs text-white outline-none focus:border-indigo-500">
+                                        <button onclick="addReply('${p._id}')" class="text-indigo-400 text-[10px] font-bold uppercase">Send</button>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 `).join('');
-            } catch (e) {
-                console.error("Feed failed to load. Is the server running?", e);
-            }
+            } catch(e) {}
         }
 
         function logout() { localStorage.removeItem('currentUser'); location.reload(); }
