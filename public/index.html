@@ -61,6 +61,15 @@
         .nav-item { display: flex; align-items: center; gap: 15px; color: var(--text-gray); padding: 14px; border-radius: 15px; cursor: pointer; margin-bottom: 5px; font-weight: 600; text-decoration: none; transition: 0.3s; }
         .nav-item.active, .nav-item:hover { background: var(--glass); color: var(--primary-violet); }
 
+        /* --- NOTIFICATION PANEL --- */
+        #notif-panel {
+            position: absolute; left: 290px; top: 80px; width: 320px; max-height: 400px;
+            background: var(--card-bg); border: 1px solid var(--primary-violet);
+            border-radius: 20px; padding: 20px; display: none; flex-direction: column;
+            z-index: 999; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .notif-item { padding: 10px; border-bottom: 1px solid var(--glass); font-size: 0.85rem; }
+
         /* --- FEED --- */
         .feed-scroll-container { height: 100vh; overflow-y: scroll; scroll-snap-type: y mandatory; scrollbar-width: none; }
         .feed-scroll-container::-webkit-scrollbar { display: none; }
@@ -88,12 +97,13 @@
         /* VOLUME PILL */
         .volume-container { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); padding: 15px 8px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; align-items: center; gap: 10px; }
         .volume-slider { -webkit-appearance: none; width: 100px; height: 6px; background: rgba(255,255,255,0.2); border-radius: 10px; transform: rotate(-90deg); margin: 45px 0; cursor: pointer; }
-        .volume-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; background: var(--primary-violet); border-radius: 50%; }
 
         .controls-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; padding: 30px; background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 40%); opacity: 0; transition: 0.3s; pointer-events: none; }
         .video-wrapper:hover .controls-overlay { opacity: 1; pointer-events: auto; }
         .progress-box { width: 100%; height: 4px; background: rgba(255,255,255,0.1); border-radius: 10px; margin-top: 15px; }
         .progress-fill { height: 100%; width: 0%; background: var(--primary-violet); border-radius: 10px; }
+
+        .follow-badge { font-size: 0.7rem; background: var(--primary-violet); padding: 2px 8px; border-radius: 5px; margin-left: 10px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -132,13 +142,17 @@
         <aside class="sidebar">
             <h2 style="color:var(--primary-violet); margin-bottom: 30px;">VIKVOK</h2>
             <nav>
-                <div class="nav-item active"><i class="ri-home-7-fill"></i> Home</div>
+                <div class="nav-item active" onclick="goHome()"><i class="ri-home-7-fill"></i> Home</div>
                 <div class="nav-item"><i class="ri-compass-3-line"></i> Explore</div>
                 <div class="nav-item"><i class="ri-chat-3-line"></i> Messages</div>
-                <div class="nav-item"><i class="ri-notification-3-line"></i> Notifications</div>
+                <div class="nav-item" onclick="toggleNotifs()"><i class="ri-notification-3-line"></i> Notifications</div>
             </nav>
+            <div id="notif-panel">
+                <h4 style="margin-bottom: 10px;">Recent Activity</h4>
+                <div id="notif-list"></div>
+            </div>
             <button class="btn-primary" onclick="toggleModal(true)" style="margin-top:20px; padding:15px;">CREATE</button>
-            <button onclick="location.reload()" class="nav-item" style="margin-top:auto; background:none; border:none; cursor:pointer;"><i class="ri-logout-box-line"></i> Logout</button>
+            <button onclick="logout()" class="nav-item" style="margin-top:auto; background:none; border:none; cursor:pointer;"><i class="ri-logout-box-line"></i> Logout</button>
         </aside>
 
         <main class="feed-scroll-container" id="feed"></main>
@@ -154,15 +168,18 @@
     <div id="upload-modal">
         <div class="modal-content">
             <h2>Upload Video</h2>
-            <div class="input-group"><input type="text" id="v-url" placeholder="Video URL (mp4)..."></div>
-            <div class="input-group"><input type="text" id="v-cap" placeholder="Caption..."></div>
-            <button class="btn-primary" onclick="uploadVideo()" style="width:100%; margin-top:10px; padding:15px;">Publish</button>
+            <p style="font-size: 0.8rem; margin-bottom: 15px; opacity: 0.6;">Select an MP4 file from your device</p>
+            <div class="input-group">
+                <i class="ri-file-upload-line"></i>
+                <input type="file" id="v-file" accept="video/mp4,video/x-m4v,video/*">
+            </div>
+            <div class="input-group"><i class="ri-edit-line"></i><input type="text" id="v-cap" placeholder="Caption..."></div>
+            <button class="btn-primary" id="upload-btn" onclick="uploadVideo()" style="width:100%; margin-top:10px; padding:15px;">Publish</button>
             <p onclick="toggleModal(false)" style="margin-top:15px; cursor:pointer; opacity:0.5;">Cancel</p>
         </div>
     </div>
 
     <script>
-        const API_URL = ""; // Empty string assumes server and index are on same host
         const container = document.getElementById('container');
         document.getElementById('registerToggle').addEventListener('click', () => container.classList.add("active"));
         document.getElementById('loginToggle').addEventListener('click', () => container.classList.remove("active"));
@@ -173,7 +190,26 @@
             setTimeout(() => document.getElementById('custom-alert').classList.remove('active'), 3000);
         }
 
-        // --- LIVE SIGNUP ---
+        // --- PERSISTENT LOGIN CHECK ---
+        window.onload = () => {
+            const savedUser = localStorage.getItem('vikvok_u');
+            if(savedUser) {
+                enterDash(savedUser);
+            }
+        };
+
+        function goHome() {
+            // Home button no longer logs out, just refreshes feed
+            loadFeed();
+            triggerAlert("Feed Updated");
+        }
+
+        function logout() {
+            localStorage.removeItem('vikvok_u');
+            location.reload();
+        }
+
+        // --- SIGNUP/LOGIN ---
         document.getElementById('signup-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const payload = {
@@ -190,12 +226,9 @@
             if(res.ok) {
                 localStorage.setItem('vikvok_u', data.user.username);
                 enterDash(data.user.username);
-            } else {
-                triggerAlert(data.error);
-            }
+            } else triggerAlert(data.error);
         });
 
-        // --- LIVE LOGIN ---
         document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const payload = {
@@ -211,9 +244,7 @@
             if(res.ok) {
                 localStorage.setItem('vikvok_u', data.username);
                 enterDash(data.username);
-            } else {
-                triggerAlert(data.error);
-            }
+            } else triggerAlert(data.error);
         });
 
         function enterDash(user) {
@@ -222,8 +253,41 @@
             document.getElementById('user-display').innerText = user;
             document.getElementById('user-init').innerText = user.charAt(0).toUpperCase();
             loadFeed();
+            loadNotifications();
         }
 
+        // --- NOTIFICATIONS ---
+        async function loadNotifications() {
+            const user = localStorage.getItem('vikvok_u');
+            const res = await fetch(`/api/notifications/${user}`);
+            const data = await res.json();
+            const list = document.getElementById('notif-list');
+            list.innerHTML = data.length ? '' : '<p style="opacity:0.5; font-size:0.8rem;">No new activity</p>';
+            data.forEach(n => {
+                list.innerHTML += `<div class="notif-item"><b>${n.fromUser}</b> ${n.message.split(' ').slice(1).join(' ')}</div>`;
+            });
+        }
+
+        function toggleNotifs() {
+            const panel = document.getElementById('notif-panel');
+            panel.style.display = panel.style.display === 'flex' ? 'none' : 'flex';
+            loadNotifications();
+        }
+
+        // --- FOLLOW SYSTEM ---
+        async function followUser(target) {
+            const currentUser = localStorage.getItem('vikvok_u');
+            if(currentUser === target) return triggerAlert("You can't follow yourself!");
+            
+            const res = await fetch('/api/follow', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ currentUser, targetUser: target })
+            });
+            if(res.ok) triggerAlert(`Following @${target}`);
+        }
+
+        // --- FEED & VIDEO ---
         async function loadFeed() {
             const res = await fetch('/api/videos');
             const videos = await res.json();
@@ -238,8 +302,8 @@
                         <div class="engagement-bar">
                             <div class="action-btn" onclick="likeVideo('${v._id}', this)"><i class="ri-heart-3-fill"></i></div>
                             <span class="action-label">${v.likes}</span>
-                            <div class="action-btn"><i class="ri-chat-3-fill"></i></div>
-                            <span class="action-label">${v.comments.length}</span>
+                            <div class="action-btn" onclick="followUser('${v.username}')"><i class="ri-user-add-line"></i></div>
+                            <span class="action-label">Follow</span>
                         </div>
                         <div class="controls-overlay">
                             <div class="volume-container">
@@ -258,30 +322,39 @@
             });
         }
 
-        async function likeVideo(id, btn) {
-            const res = await fetch(`/api/videos/${id}/like`, { method: 'POST' });
-            if(res.ok) {
-                btn.classList.add('liked');
-                const label = btn.nextElementSibling;
-                label.innerText = parseInt(label.innerText) + 1;
-            }
-        }
-
+        // --- FILE UPLOAD ---
         async function uploadVideo() {
-            const payload = {
-                username: localStorage.getItem('vikvok_u'),
-                videoUrl: document.getElementById('v-url').value,
-                caption: document.getElementById('v-cap').value
-            };
-            const res = await fetch('/api/upload', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(payload)
-            });
-            if(res.ok) {
-                toggleModal(false);
-                loadFeed();
-                triggerAlert("Video Live!");
+            const fileInput = document.getElementById('v-file');
+            const captionInput = document.getElementById('v-cap');
+            const btn = document.getElementById('upload-btn');
+
+            if(!fileInput.files[0]) return triggerAlert("Please select a video file!");
+            
+            btn.innerText = "Uploading...";
+            btn.disabled = true;
+
+            const formData = new FormData();
+            formData.append('videoFile', fileInput.files[0]);
+            formData.append('username', localStorage.getItem('vikvok_u'));
+            formData.append('caption', captionInput.value);
+
+            try {
+                const res = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData // No Headers needed for FormData
+                });
+                if(res.ok) {
+                    toggleModal(false);
+                    loadFeed();
+                    triggerAlert("Video Published!");
+                } else {
+                    triggerAlert("Upload Failed!");
+                }
+            } catch (err) {
+                triggerAlert("Error connecting to server");
+            } finally {
+                btn.innerText = "Publish";
+                btn.disabled = false;
             }
         }
 
