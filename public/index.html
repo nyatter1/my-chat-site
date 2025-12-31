@@ -22,8 +22,13 @@
         .post-img { max-height: 350px; width: 100%; object-fit: cover; border-radius: 1rem; margin-top: 10px; border: 1px solid rgba(255,255,255,0.1); }
         .pinned-post { border-left: 4px solid #fbbf24 !important; background: rgba(251, 191, 36, 0.03) !important; }
         .dev-badge { background: linear-gradient(to right, #6366f1, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800; font-size: 0.7rem; border: 1px solid #6366f1; padding: 0 4px; border-radius: 4px; }
-        .post-card { transition: background 0.2s; }
-        .post-card:hover { background: rgba(255, 255, 255, 0.02); }
+        
+        /* TAG HIGHLIGHTING */
+        .my-tag { border: 1px solid #fbbf24; background: rgba(251, 191, 36, 0.15); color: #fbbf24; padding: 0 4px; border-radius: 4px; font-weight: bold; }
+        .other-tag { color: #818cf8; font-weight: bold; }
+        
+        #notif-dot { position: absolute; top: 10px; right: 10px; width: 8px; height: 8px; background: #ef4444; border-radius: 50%; display: none; }
+        .notif-modal { position: absolute; top: 60px; left: 20px; width: 250px; background: #1e293b; border: 1px solid rgba(255,255,255,0.1); border-radius: 1rem; z-index: 200; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
     </style>
 </head>
 <body class="flex justify-center">
@@ -35,25 +40,25 @@
             <input type="text" id="login-user" placeholder="Username" class="w-full px-5 py-3 input-nyan mb-4 outline-none">
             <input type="password" id="login-pass" placeholder="Password" class="w-full px-5 py-3 input-nyan mb-6 outline-none">
             <button onclick="login()" class="w-full py-3 meow-btn rounded-xl font-bold text-white">Login</button>
-            <p class="text-center mt-6 text-slate-400 text-sm">Need an account? <button onclick="toggleView()" class="text-indigo-400 font-bold">Sign up</button></p>
-        </div>
-        <div id="signup-form" class="hidden">
-            <h1 class="text-3xl font-bold mb-6 text-center text-white">Join <span class="rainbow-text">Nyatter</span></h1>
-            <input type="text" id="reg-user" placeholder="Choose Username" class="w-full px-5 py-3 input-nyan mb-4 outline-none">
-            <input type="password" id="reg-pass" placeholder="Create Password" class="w-full px-5 py-3 input-nyan mb-6 outline-none">
-            <button onclick="signup()" class="w-full py-3 meow-btn rounded-xl font-bold text-white">Sign Up</button>
-            <p class="text-center mt-6 text-slate-400 text-sm">Member? <button onclick="toggleView()" class="text-indigo-400 font-bold">Login</button></p>
         </div>
     </div>
 
-    <div id="app-ui" class="hidden w-full max-w-[1300px] flex h-screen">
-        <aside class="w-1/4 max-w-[280px] flex flex-col p-4 glass-panel">
+    <div id="app-ui" class="hidden w-full max-w-[1300px] flex h-screen relative">
+        <aside class="w-1/4 max-w-[280px] flex flex-col p-4 glass-panel relative">
             <div class="mb-8 px-4 py-2"><img src="logo.png" alt="Nyatter" class="w-12 h-12"></div>
             <nav class="flex-1 space-y-2">
                 <div class="flex items-center gap-4 px-4 py-3 text-xl font-bold text-white bg-indigo-500/10 rounded-full cursor-pointer"><span>🏠</span> Home</div>
-                <div class="flex items-center gap-4 px-4 py-3 text-xl font-bold text-slate-400 hover:bg-white/5 rounded-full cursor-not-allowed"><span>🔔</span> Alerts</div>
-                <div class="flex items-center gap-4 px-4 py-3 text-xl font-bold text-slate-400 hover:bg-white/5 rounded-full cursor-not-allowed"><span>✉️</span> Meow-Box</div>
+                <div onclick="toggleNotifs()" class="flex items-center gap-4 px-4 py-3 text-xl font-bold text-white hover:bg-white/5 rounded-full cursor-pointer relative">
+                    <span>🔔</span> Alerts
+                    <div id="notif-dot"></div>
+                </div>
             </nav>
+
+            <div id="notif-modal" class="notif-modal hidden p-4">
+                <h4 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Recent Alerts</h4>
+                <div id="notif-list" class="space-y-2"></div>
+            </div>
+
             <div class="mt-auto p-4 border-t border-white/5">
                 <div class="flex items-center gap-3">
                     <img src="default.png" class="w-10 h-10 rounded-full border border-white/20">
@@ -62,72 +67,38 @@
                         <div id="dev-tag-sidebar" class="hidden"><span class="dev-badge">DEVELOPER 🛠️</span></div>
                     </div>
                 </div>
-                <button onclick="logout()" class="w-full mt-4 py-2 bg-slate-800/50 rounded-lg text-xs text-red-400 font-bold border border-red-400/20">Logout System</button>
+                <button onclick="logout()" class="w-full mt-4 py-2 bg-slate-800 rounded-lg text-xs text-red-400 font-bold">Logout</button>
             </div>
         </aside>
 
         <main class="flex-1 flex flex-col glass-panel border-x h-full">
-            <header class="p-4 border-b border-white/5 bg-slate-900/60 backdrop-blur-md flex justify-between items-center">
+            <header class="p-4 border-b border-white/5 bg-slate-900/60 flex justify-between">
                 <h2 class="text-xl font-bold">Global Transmission</h2>
-                <div class="flex items-center gap-2">
-                    <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                    <span class="text-[10px] uppercase font-bold text-slate-500">Live Sync</span>
-                </div>
             </header>
 
-            <div class="flex-1 overflow-y-auto custom-scroll" id="main-scroll">
+            <div class="flex-1 overflow-y-auto custom-scroll">
                 <div class="p-4 border-b border-white/5 bg-slate-900/20">
                     <div class="flex gap-4">
                         <img src="default.png" class="w-12 h-12 rounded-full border border-white/10 shrink-0">
                         <div class="flex-1 relative">
-                            <textarea id="meow-content" placeholder="What's your frequency?" class="w-full bg-transparent text-xl outline-none resize-none h-24 pt-2 text-white"></textarea>
-                            <div id="preview-area" class="preview-box"></div>
-                            
+                            <textarea id="meow-content" placeholder="Broadcast to @users..." class="w-full bg-transparent text-xl outline-none resize-none h-24 pt-2 text-white"></textarea>
+                            <div id="preview-area"></div>
                             <div class="flex justify-between items-center border-t border-white/5 pt-4">
-                                <div class="flex gap-4 items-center">
-                                    <label class="cursor-pointer text-xl hover:scale-125 transition-transform">🖼️<input type="file" id="post-file" class="hidden" accept="image/*" onchange="handleFile(event)"></label>
-                                    <span class="cursor-pointer text-xl hover:scale-125 transition-transform" onclick="toggleEmoji()">😃</span>
-                                </div>
-                                <button onclick="postMeow()" class="px-10 py-2.5 meow-btn rounded-full font-bold text-white uppercase tracking-tighter">Post Meow</button>
-                            </div>
-
-                            <div id="emoji-picker" class="hidden">
-                                <span class="emoji-btn" onclick="insertEmoji('😺')">😺</span><span class="emoji-btn" onclick="insertEmoji('🌈')">🌈</span>
-                                <span class="emoji-btn" onclick="insertEmoji('✨')">✨</span><span class="emoji-btn" onclick="insertEmoji('🚀')">🚀</span>
-                                <span class="emoji-btn" onclick="insertEmoji('🔥')">🔥</span><span class="emoji-btn" onclick="insertEmoji('💯')">💯</span>
-                                <span class="emoji-btn" onclick="insertEmoji('😂')">😂</span><span class="emoji-btn" onclick="insertEmoji('💎')">💎</span>
+                                <label class="cursor-pointer text-xl">🖼️<input type="file" id="post-file" class="hidden" accept="image/*" onchange="handleFile(event)"></label>
+                                <button onclick="postMeow()" class="px-10 py-2 meow-btn rounded-full font-bold text-white uppercase">Meow</button>
                             </div>
                         </div>
                     </div>
                 </div>
-
                 <div id="feed" class="divide-y divide-white/5"></div>
             </div>
         </main>
-
-        <aside class="w-1/3 max-w-[350px] p-6 h-full space-y-6">
-            <div class="bg-slate-800/40 rounded-3xl p-6 border border-white/5">
-                <h3 class="text-xl font-bold mb-6">Galactic Trends</h3>
-                <div class="space-y-6">
-                    <div>
-                        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Trending in Galaxy</p>
-                        <p class="font-bold text-indigo-400">#NyanNet2025</p>
-                        <p class="text-xs text-slate-500">12.4k Meows</p>
-                    </div>
-                    <div>
-                        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Dev Corner</p>
-                        <p class="font-bold text-white">#HaydenControl</p>
-                        <p class="text-xs text-slate-500">Direct Uplink</p>
-                    </div>
-                </div>
-            </div>
-        </aside>
     </div>
 
     <script>
         let currentImg = null;
         let currentUser = null;
-        let activeInput = false; // Prevents laggy clearing
+        let activeInput = false;
         const DEV_NAME = "HaydenDev";
 
         window.onload = () => {
@@ -135,18 +106,10 @@
             if (saved) loginSuccess(saved);
         };
 
-        function toggleView() {
-            document.getElementById('login-form').classList.toggle('hidden');
-            document.getElementById('signup-form').classList.toggle('hidden');
-        }
-
         function login() {
             const u = document.getElementById('login-user').value.trim();
-            if(!u) return;
-            loginSuccess(u);
+            if(u) loginSuccess(u);
         }
-
-        function signup() { login(); }
 
         function loginSuccess(u) {
             currentUser = u;
@@ -157,20 +120,46 @@
             if(u === DEV_NAME) document.getElementById('dev-tag-sidebar').classList.remove('hidden');
             
             renderFeed();
-            setInterval(() => { if(!activeInput) renderFeed(); }, 3000);
+            checkNotifs();
+            setInterval(() => { 
+                if(!activeInput) renderFeed(); 
+                checkNotifs();
+            }, 4000);
         }
 
-        function handleFile(e) {
-            const reader = new FileReader();
-            reader.onload = () => {
-                currentImg = reader.result;
-                document.getElementById('preview-area').innerHTML = `<img src="${currentImg}" class="post-img h-32 w-auto mb-4 border-2 border-indigo-500">`;
-            };
-            if(e.target.files[0]) reader.readAsDataURL(e.target.files[0]);
+        // Helper to color tags
+        function parseTags(text) {
+            return text.replace(/@(\w+)/g, (match, username) => {
+                const isMe = username === currentUser;
+                return `<span class="${isMe ? 'my-tag' : 'other-tag'}">${match}</span>`;
+            });
         }
 
-        function toggleEmoji() { document.getElementById('emoji-picker').classList.toggle('hidden'); }
-        function insertEmoji(e) { document.getElementById('meow-content').value += e; toggleEmoji(); }
+        async function checkNotifs() {
+            const res = await fetch(`/api/notifications/${currentUser}`);
+            const notifs = await res.json();
+            const dot = document.getElementById('notif-dot');
+            dot.style.display = notifs.length > 0 ? 'block' : 'none';
+            
+            const list = document.getElementById('notif-list');
+            list.innerHTML = notifs.map(n => `
+                <div class="bg-white/5 p-2 rounded flex justify-between items-center text-[11px]">
+                    <span><b>@${n.fromUser}</b> tagged you!</span>
+                    <button onclick="clearNotif('${n._id}')" class="text-red-400 font-bold ml-2">X</button>
+                </div>
+            `).join('') || '<p class="text-[10px] text-slate-500">No new alerts.</p>';
+        }
+
+        async function clearNotif(id) {
+            await fetch('/api/notifications/clear', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ id })
+            });
+            checkNotifs();
+        }
+
+        function toggleNotifs() { document.getElementById('notif-modal').classList.toggle('hidden'); }
 
         async function postMeow() {
             const txt = document.getElementById('meow-content').value.trim();
@@ -187,7 +176,7 @@
         }
 
         async function deletePost(id) {
-            if(!confirm("Erase from existence?")) return;
+            if(!confirm("Erase?")) return;
             await fetch('/api/posts/delete', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -233,7 +222,7 @@
                 const container = document.getElementById('feed');
                 
                 container.innerHTML = posts.map(p => `
-                    <div class="p-5 post-card ${p.pinned ? 'pinned-post' : ''}">
+                    <div class="p-5 ${p.pinned ? 'pinned-post' : ''}">
                         <div class="flex gap-4">
                             <img src="default.png" class="w-12 h-12 rounded-full border border-white/10 shrink-0">
                             <div class="flex-1">
@@ -241,35 +230,25 @@
                                     <div class="flex items-center gap-2">
                                         <span class="font-bold text-white">@${p.user}</span>
                                         ${p.user === DEV_NAME ? '<span class="dev-badge">DEV 🛠️</span>' : ''}
-                                        ${p.pinned ? '<span class="text-amber-400 text-[10px] font-bold uppercase tracking-widest">📌 PINNED</span>' : ''}
+                                        ${p.pinned ? '<span class="text-amber-400 text-[10px] font-bold">📌 PINNED</span>' : ''}
                                     </div>
                                     <div class="flex gap-3">
-                                        ${currentUser === DEV_NAME ? `<button onclick="togglePin('${p._id}')" class="text-[10px] text-slate-500 hover:text-amber-400">PIN</button>` : ''}
-                                        ${(p.user === currentUser || currentUser === DEV_NAME) ? `<button onclick="deletePost('${p._id}')" class="text-[10px] text-red-500/50 hover:text-red-500">DELETE</button>` : ''}
+                                        ${currentUser === DEV_NAME ? `<button onclick="togglePin('${p._id}')" class="text-[10px] text-slate-500">PIN</button>` : ''}
+                                        ${(p.user === currentUser || currentUser === DEV_NAME) ? `<button onclick="deletePost('${p._id}')" class="text-[10px] text-red-500">DELETE</button>` : ''}
                                     </div>
                                 </div>
-                                <p class="text-slate-200 mt-2 text-[15px] leading-relaxed whitespace-pre-wrap">${p.text}</p>
-                                ${p.img ? `<img src="${p.img}" class="post-img shadow-2xl">` : ''}
+                                <p class="text-slate-200 mt-2 text-[15px] whitespace-pre-wrap">${parseTags(p.text)}</p>
+                                ${p.img ? `<img src="${p.img}" class="post-img">` : ''}
                                 
                                 <div class="flex gap-8 mt-4 text-xs font-bold text-slate-500">
-                                    <button onclick="toggleLike('${p._id}')" class="flex items-center gap-2 ${p.likes?.includes(currentUser) ? 'text-pink-500' : ''}">
-                                        ${p.likes?.includes(currentUser) ? '❤️' : '🤍'} ${p.likes?.length || 0}
-                                    </button>
-                                    <div class="flex items-center gap-2">💬 ${p.replies?.length || 0}</div>
+                                    <button onclick="toggleLike('${p._id}')" class="${p.likes?.includes(currentUser) ? 'text-pink-500' : ''}">❤️ ${p.likes?.length || 0}</button>
+                                    <div>💬 ${p.replies?.length || 0}</div>
                                 </div>
 
                                 <div class="mt-4 space-y-3 pl-4 border-l border-white/5">
-                                    ${p.replies?.map(r => `
-                                        <div class="text-[13px] text-slate-300">
-                                            <span class="text-indigo-400 font-bold">@${r.user}</span>: ${r.text}
-                                        </div>
-                                    `).join('') || ''}
+                                    ${p.replies?.map(r => `<div class="text-[13px] text-slate-300"><span class="text-indigo-400 font-bold">@${r.user}</span>: ${parseTags(r.text)}</div>`).join('') || ''}
                                     <div class="flex gap-2 mt-2">
-                                        <input id="re-${p._id}" 
-                                               onfocus="activeInput=true" 
-                                               onblur="setTimeout(()=>activeInput=false, 200)"
-                                               placeholder="Reply to frequency..." 
-                                               class="flex-1 bg-slate-900/40 border border-white/5 rounded-full px-4 py-1.5 text-xs text-white outline-none focus:border-indigo-500">
+                                        <input id="re-${p._id}" onfocus="activeInput=true" onblur="setTimeout(()=>activeInput=false, 200)" placeholder="Reply..." class="flex-1 bg-slate-900/40 border border-white/5 rounded-full px-4 py-1.5 text-xs text-white outline-none">
                                         <button onclick="addReply('${p._id}')" class="text-indigo-400 text-[10px] font-bold uppercase">Send</button>
                                     </div>
                                 </div>
@@ -278,6 +257,15 @@
                     </div>
                 `).join('');
             } catch(e) {}
+        }
+
+        function handleFile(e) {
+            const reader = new FileReader();
+            reader.onload = () => {
+                currentImg = reader.result;
+                document.getElementById('preview-area').innerHTML = `<img src="${currentImg}" class="h-20 rounded mt-2">`;
+            };
+            if(e.target.files[0]) reader.readAsDataURL(e.target.files[0]);
         }
 
         function logout() { localStorage.removeItem('currentUser'); location.reload(); }
