@@ -5,178 +5,240 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nyatter / Home Global</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Quicksand', sans-serif; background: radial-gradient(circle at top right, #1e293b, #0f172a); color: #f8fafc; height: 100vh; overflow: hidden; }
-        .glass-panel { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(12px); border-right: 1px solid rgba(255, 255, 255, 0.05); border-left: 1px solid rgba(255, 255, 255, 0.05); }
-        .rainbow-text { background: linear-gradient(to right, #ff4d4d, #f97316, #fbbf24, #4ade80, #60a5fa, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800; }
+        :root {
+            --glass: rgba(15, 23, 42, 0.75);
+            --border: rgba(255, 255, 255, 0.08);
+            --accent: #6366f1;
+        }
+
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background: radial-gradient(circle at top right, #1e293b, #020617); 
+            color: #f8fafc; 
+            height: 100vh; 
+            overflow: hidden; 
+        }
+
+        /* Glassmorphism Effects */
+        .glass { background: var(--glass); backdrop-filter: blur(20px); border: 1px solid var(--border); }
+        .sidebar-border { border-right: 1px solid var(--border); }
+        .feed-border { border-right: 1px solid var(--border); border-left: 1px solid var(--border); }
+        
+        .rainbow-text { 
+            background: linear-gradient(90deg, #ff4d4d, #f97316, #fbbf24, #4ade80, #60a5fa, #a855f7); 
+            -webkit-background-clip: text; 
+            -webkit-text-fill-color: transparent; 
+            font-weight: 800; 
+        }
+
         .custom-scroll::-webkit-scrollbar { width: 4px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
-        .hidden { display: none !important; }
-        .meow-btn { background: linear-gradient(90deg, #4f46e5, #7c3aed); box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3); transition: transform 0.1s; }
-        .meow-btn:active { transform: scale(0.95); }
-        .input-nyan { background: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 0.75rem; color: white; }
-        #emoji-picker { background: #1e293b; border: 1px solid rgba(255,255,255,0.1); display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 10px; position: absolute; z-index: 100; border-radius: 12px; bottom: 60px; left: 0; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-        .emoji-btn { cursor: pointer; font-size: 1.2rem; transition: transform 0.2s; }
-        .emoji-btn:hover { transform: scale(1.3); }
-        .post-img { max-height: 350px; width: 100%; object-fit: cover; border-radius: 1rem; margin-top: 10px; border: 1px solid rgba(255,255,255,0.1); }
-        .pinned-post { border-left: 4px solid #fbbf24 !important; background: rgba(251, 191, 36, 0.03) !important; }
-        .dev-badge { background: linear-gradient(to right, #6366f1, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800; font-size: 0.7rem; border: 1px solid #6366f1; padding: 0 4px; border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+
+        /* Component Styling */
+        .meow-btn { 
+            background: linear-gradient(135deg, #6366f1, #a855f7); 
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3); 
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .meow-btn:hover { transform: translateY(-1px); filter: brightness(1.1); }
+        .meow-btn:active { transform: translateY(1px); }
+
+        .post-card { transition: all 0.3s ease; border-bottom: 1px solid var(--border); }
+        .post-card:hover { background: rgba(255, 255, 255, 0.02); }
+
+        .my-tag { background: rgba(251, 191, 36, 0.1); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.2); padding: 0 4px; border-radius: 4px; font-weight: 600; }
+        .other-tag { color: #818cf8; font-weight: 600; }
         
-        /* TAG HIGHLIGHTING */
-        .my-tag { border: 1px solid #fbbf24; background: rgba(251, 191, 36, 0.15); color: #fbbf24; padding: 0 4px; border-radius: 4px; font-weight: bold; }
-        .other-tag { color: #818cf8; font-weight: bold; }
+        .notif-dot { position: absolute; top: 0; right: 0; width: 10px; height: 10px; background: #ef4444; border-radius: 50%; border: 2px solid #020617; display: none; }
         
-        #notif-dot { position: absolute; top: 10px; right: 10px; width: 8px; height: 8px; background: #ef4444; border-radius: 50%; display: none; }
-        .notif-modal { position: absolute; top: 60px; left: 20px; width: 250px; background: #1e293b; border: 1px solid rgba(255,255,255,0.1); border-radius: 1rem; z-index: 200; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+        .dev-badge { background: linear-gradient(to right, #6366f1, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; border: 1px solid #6366f1; padding: 1px 6px; border-radius: 6px; font-size: 10px; font-weight: 800; text-transform: uppercase; }
+        
+        #preview-area img { max-height: 200px; border-radius: 12px; margin-top: 10px; border: 2px solid var(--accent); }
     </style>
 </head>
 <body class="flex justify-center">
 
-    <div id="auth-ui" class="w-full max-w-[420px] self-center bg-slate-800/60 p-10 rounded-[2rem] border border-white/10 shadow-2xl">
-        <div class="flex justify-center mb-6"><img src="logo.png" alt="Nyatter" class="w-20 h-20 object-contain"></div>
-        <div id="login-form">
-            <h1 class="text-3xl font-bold mb-6 text-center">Login to <span class="rainbow-text">Nyatter</span></h1>
-            <input type="text" id="login-user" placeholder="Username" class="w-full px-5 py-3 input-nyan mb-4 outline-none">
-            <input type="password" id="login-pass" placeholder="Password" class="w-full px-5 py-3 input-nyan mb-6 outline-none">
-            <button onclick="login()" class="w-full py-3 meow-btn rounded-xl font-bold text-white">Login</button>
+    <div id="auth-ui" class="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-950 px-4">
+        <div class="w-full max-w-[420px] glass p-10 rounded-[2.5rem] shadow-2xl">
+            <div class="text-center mb-10">
+                <h1 class="text-4xl font-black tracking-tighter mb-2">NYATTER</h1>
+                <p class="text-slate-400 text-sm">Welcome back to the grid.</p>
+            </div>
+            
+            <div id="login-form" class="space-y-4">
+                <input type="text" id="log-u" placeholder="Username" class="w-full p-4 bg-slate-900/50 rounded-2xl outline-none border border-white/5 focus:border-indigo-500 transition-all">
+                <button onclick="auth('login')" class="w-full py-4 meow-btn rounded-2xl font-bold text-white uppercase tracking-widest">Connect</button>
+                <p class="text-center text-sm text-slate-500">First time? <button onclick="toggleAuth()" class="text-indigo-400 font-bold">Create Account</button></p>
+            </div>
+
+            <div id="signup-form" class="hidden space-y-4">
+                <input type="text" id="reg-u" placeholder="Choose Username" class="w-full p-4 bg-slate-900/50 rounded-2xl outline-none border border-white/5 focus:border-indigo-500 transition-all">
+                <button onclick="auth('signup')" class="w-full py-4 meow-btn rounded-2xl font-bold text-white uppercase tracking-widest">Register</button>
+                <p class="text-center text-sm text-slate-500">Already a member? <button onclick="toggleAuth()" class="text-indigo-400 font-bold">Login</button></p>
+            </div>
         </div>
     </div>
 
-    <div id="app-ui" class="hidden w-full max-w-[1300px] flex h-screen relative">
-        <aside class="w-1/4 max-w-[280px] flex flex-col p-4 glass-panel relative">
-            <div class="mb-8 px-4 py-2"><img src="logo.png" alt="Nyatter" class="w-12 h-12"></div>
+    <div id="app-ui" class="hidden w-full max-w-[1440px] flex h-screen relative">
+        
+        <aside class="w-[300px] flex flex-col p-6 sidebar-border">
+            <div class="mb-10 px-4"><span class="text-3xl font-black rainbow-text">NYATTER</span></div>
+            
             <nav class="flex-1 space-y-2">
-                <div class="flex items-center gap-4 px-4 py-3 text-xl font-bold text-white bg-indigo-500/10 rounded-full cursor-pointer"><span>🏠</span> Home</div>
-                <div onclick="toggleNotifs()" class="flex items-center gap-4 px-4 py-3 text-xl font-bold text-white hover:bg-white/5 rounded-full cursor-pointer relative">
-                    <span>🔔</span> Alerts
+                <div class="flex items-center gap-4 px-6 py-4 text-lg font-bold text-white bg-indigo-500/10 rounded-2xl border border-indigo-500/20 cursor-pointer">
+                    <span>🏠</span> Home
+                </div>
+                <div onclick="toggleNotifPanel()" class="relative flex items-center gap-4 px-6 py-4 text-lg font-bold text-slate-400 hover:text-white hover:bg-white/5 rounded-2xl transition-all cursor-pointer">
+                    <span>🔔</span> Notifications
                     <div id="notif-dot"></div>
                 </div>
             </nav>
 
-            <div id="notif-modal" class="notif-modal hidden p-4">
-                <h4 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Recent Alerts</h4>
+            <div id="notif-panel" class="hidden absolute top-32 left-8 w-[280px] glass rounded-3xl p-4 shadow-2xl z-50">
+                <h3 class="text-xs font-black text-slate-500 uppercase tracking-widest mb-4">Signal Alerts</h3>
                 <div id="notif-list" class="space-y-2"></div>
             </div>
 
-            <div class="mt-auto p-4 border-t border-white/5">
+            <div class="mt-auto p-4 glass rounded-[2rem] border border-white/5">
                 <div class="flex items-center gap-3">
-                    <img src="default.png" class="w-10 h-10 rounded-full border border-white/20">
-                    <div>
-                        <p class="font-bold text-sm text-white" id="user-tag"></p>
-                        <div id="dev-tag-sidebar" class="hidden"><span class="dev-badge">DEVELOPER 🛠️</span></div>
+                    <img src="default.png" class="w-10 h-10 rounded-full bg-slate-800">
+                    <div class="overflow-hidden">
+                        <p class="font-bold text-sm truncate" id="user-display"></p>
+                        <div id="dev-tag" class="hidden"><span class="dev-badge">Core Dev</span></div>
                     </div>
                 </div>
-                <button onclick="logout()" class="w-full mt-4 py-2 bg-slate-800 rounded-lg text-xs text-red-400 font-bold">Logout</button>
+                <button onclick="logout()" class="w-full mt-4 py-2 text-xs font-bold text-red-400/60 hover:text-red-400 transition-colors uppercase tracking-widest">Disconnect</button>
             </div>
         </aside>
 
-        <main class="flex-1 flex flex-col glass-panel border-x h-full">
-            <header class="p-4 border-b border-white/5 bg-slate-900/60 flex justify-between">
-                <h2 class="text-xl font-bold">Global Transmission</h2>
+        <main class="flex-1 flex flex-col glass feed-border h-full">
+            <header class="p-6 border-b border-white/5 flex justify-between items-center bg-slate-950/20 backdrop-blur-md">
+                <h2 class="text-xl font-black">GLOBAL STREAM</h2>
+                <div class="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase">
+                    <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    Satellite Active
+                </div>
             </header>
 
-            <div class="flex-1 overflow-y-auto custom-scroll">
-                <div class="p-4 border-b border-white/5 bg-slate-900/20">
-                    <div class="flex gap-4">
-                        <img src="default.png" class="w-12 h-12 rounded-full border border-white/10 shrink-0">
-                        <div class="flex-1 relative">
-                            <textarea id="meow-content" placeholder="Broadcast to @users..." class="w-full bg-transparent text-xl outline-none resize-none h-24 pt-2 text-white"></textarea>
+            <div class="flex-1 overflow-y-auto custom-scroll" id="feed-scroll">
+                <div class="p-6 border-b border-white/5 bg-white/[0.01]">
+                    <div class="flex gap-5">
+                        <img src="default.png" class="w-14 h-14 rounded-full bg-slate-800 shrink-0">
+                        <div class="flex-1">
+                            <textarea id="post-input" placeholder="Broadcast your thoughts to the world..." class="w-full bg-transparent text-xl outline-none resize-none h-24 pt-2 text-white placeholder-slate-600 font-medium"></textarea>
                             <div id="preview-area"></div>
-                            <div class="flex justify-between items-center border-t border-white/5 pt-4">
-                                <label class="cursor-pointer text-xl">🖼️<input type="file" id="post-file" class="hidden" accept="image/*" onchange="handleFile(event)"></label>
-                                <button onclick="postMeow()" class="px-10 py-2 meow-btn rounded-full font-bold text-white uppercase">Meow</button>
+                            
+                            <div class="flex justify-between items-center mt-4 pt-4 border-t border-white/5">
+                                <div class="flex gap-4">
+                                    <label class="cursor-pointer p-2 hover:bg-white/5 rounded-xl transition-all text-xl">
+                                        🖼️<input type="file" class="hidden" accept="image/*" onchange="previewImage(event)">
+                                    </label>
+                                    <button class="p-2 hover:bg-white/5 rounded-xl transition-all text-xl">😃</button>
+                                </div>
+                                <button onclick="sendPost()" class="px-10 py-3 meow-btn rounded-full font-black text-white uppercase text-sm tracking-widest">Transmit</button>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div id="feed" class="divide-y divide-white/5"></div>
+
+                <div id="feed-container" class="divide-y divide-white/5"></div>
             </div>
         </main>
+
+        <aside class="w-[350px] p-8 space-y-8 h-full overflow-y-auto custom-scroll">
+            <div class="glass p-6 rounded-[2rem] border-white/5">
+                <h3 class="text-xs font-black text-slate-500 uppercase tracking-widest mb-6 flex items-center gap-2">
+                    <span class="w-2 h-2 bg-indigo-500 rounded-full"></span>
+                    Active Users
+                </h3>
+                <div id="user-list" class="space-y-4"></div>
+            </div>
+
+            <div class="p-6">
+                <p class="text-[10px] text-slate-600 font-bold uppercase tracking-widest mb-2">System Status</p>
+                <div class="text-[11px] text-slate-500 space-y-1">
+                    <p>Uptime: 99.9%</p>
+                    <p>Protocol: Nyatter v2.4.0</p>
+                    <p>Encryption: Enabled</p>
+                </div>
+            </div>
+        </aside>
+
     </div>
 
     <script>
-        let currentImg = null;
+        let currentImage = null;
         let currentUser = null;
-        let activeInput = false;
-        const DEV_NAME = "HaydenDev";
+        let isTyping = false;
+        const ADMIN = "HaydenDev";
 
         window.onload = () => {
-            const saved = localStorage.getItem('currentUser');
-            if (saved) loginSuccess(saved);
+            const user = localStorage.getItem('nyatter_user');
+            if (user) loginFlow(user);
         };
 
-        function login() {
-            const u = document.getElementById('login-user').value.trim();
-            if(u) loginSuccess(u);
+        // --- AUTH LOGIC ---
+        function toggleAuth() {
+            document.getElementById('login-form').classList.toggle('hidden');
+            document.getElementById('signup-form').classList.toggle('hidden');
         }
 
-        function loginSuccess(u) {
-            currentUser = u;
-            localStorage.setItem('currentUser', u);
+        async function auth(type) {
+            const user = document.getElementById(type === 'login' ? 'log-u' : 'reg-u').value.trim();
+            if(!user) return;
+            
+            if(type === 'signup') {
+                await fetch('/api/signup', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ username: user })
+                });
+            }
+            loginFlow(user);
+        }
+
+        function loginFlow(user) {
+            currentUser = user;
+            localStorage.Nyatter_User = user;
+            localStorage.setItem('nyatter_user', user);
             document.getElementById('auth-ui').classList.add('hidden');
             document.getElementById('app-ui').classList.remove('hidden');
-            document.getElementById('user-tag').innerText = "@" + u;
-            if(u === DEV_NAME) document.getElementById('dev-tag-sidebar').classList.remove('hidden');
+            document.getElementById('user-display').innerText = "@" + user;
+            if(user === ADMIN) document.getElementById('dev-tag').classList.remove('hidden');
             
+            init();
+        }
+
+        function init() {
             renderFeed();
-            checkNotifs();
-            setInterval(() => { 
-                if(!activeInput) renderFeed(); 
-                checkNotifs();
-            }, 4000);
+            fetchUsers();
+            checkAlerts();
+            setInterval(() => {
+                if(!isTyping) { renderFeed(); checkAlerts(); fetchUsers(); }
+            }, 5000);
         }
 
-        // Helper to color tags
-        function parseTags(text) {
-            return text.replace(/@(\w+)/g, (match, username) => {
-                const isMe = username === currentUser;
-                return `<span class="${isMe ? 'my-tag' : 'other-tag'}">${match}</span>`;
-            });
-        }
-
-        async function checkNotifs() {
-            const res = await fetch(`/api/notifications/${currentUser}`);
-            const notifs = await res.json();
-            const dot = document.getElementById('notif-dot');
-            dot.style.display = notifs.length > 0 ? 'block' : 'none';
+        // --- CORE ACTIONS ---
+        async function sendPost() {
+            const text = document.getElementById('post-input').value.trim();
+            if(!text && !currentImage) return;
             
-            const list = document.getElementById('notif-list');
-            list.innerHTML = notifs.map(n => `
-                <div class="bg-white/5 p-2 rounded flex justify-between items-center text-[11px]">
-                    <span><b>@${n.fromUser}</b> tagged you!</span>
-                    <button onclick="clearNotif('${n._id}')" class="text-red-400 font-bold ml-2">X</button>
-                </div>
-            `).join('') || '<p class="text-[10px] text-slate-500">No new alerts.</p>';
-        }
-
-        async function clearNotif(id) {
-            await fetch('/api/notifications/clear', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ id })
-            });
-            checkNotifs();
-        }
-
-        function toggleNotifs() { document.getElementById('notif-modal').classList.toggle('hidden'); }
-
-        async function postMeow() {
-            const txt = document.getElementById('meow-content').value.trim();
-            if(!txt && !currentImg) return;
             await fetch('/api/posts', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ user: currentUser, text: txt, img: currentImg })
+                body: JSON.stringify({ user: currentUser, text, img: currentImage })
             });
-            document.getElementById('meow-content').value = "";
+            
+            document.getElementById('post-input').value = "";
             document.getElementById('preview-area').innerHTML = "";
-            currentImg = null;
+            currentImage = null;
             renderFeed();
         }
 
         async function deletePost(id) {
-            if(!confirm("Erase?")) return;
+            if(!confirm("Erase this transmission?")) return;
             await fetch('/api/posts/delete', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -185,7 +247,7 @@
             renderFeed();
         }
 
-        async function togglePin(id) {
+        async function pinPost(id) {
             await fetch('/api/posts/pin', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -194,81 +256,125 @@
             renderFeed();
         }
 
-        async function toggleLike(id) {
-            await fetch('/api/posts/like', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ id, user: currentUser })
-            });
-            renderFeed();
-        }
-
-        async function addReply(id) {
-            const inp = document.getElementById(`re-${id}`);
-            if(!inp.value.trim()) return;
+        async function sendReply(id) {
+            const input = document.getElementById(`reply-for-${id}`);
+            if(!input.value.trim()) return;
+            
             await fetch('/api/posts/reply', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ id, user: currentUser, text: inp.value })
+                body: JSON.stringify({ id, user: currentUser, text: input.value })
             });
-            activeInput = false;
+            isTyping = false;
             renderFeed();
+        }
+
+        // --- RENDERING ENGINE ---
+        function parseContent(text) {
+            return text.replace(/@(\w+)/g, (match, name) => {
+                return `<span class="${name === currentUser ? 'my-tag' : 'other-tag'}">${match}</span>`;
+            });
         }
 
         async function renderFeed() {
             try {
                 const res = await fetch('/api/posts');
                 const posts = await res.json();
-                const container = document.getElementById('feed');
+                const container = document.getElementById('feed-container');
                 
                 container.innerHTML = posts.map(p => `
-                    <div class="p-5 ${p.pinned ? 'pinned-post' : ''}">
-                        <div class="flex gap-4">
-                            <img src="default.png" class="w-12 h-12 rounded-full border border-white/10 shrink-0">
-                            <div class="flex-1">
-                                <div class="flex justify-between items-start">
+                    <div class="p-6 post-card ${p.pinned ? 'bg-indigo-500/[0.03] border-l-4 border-l-indigo-500' : ''}">
+                        <div class="flex gap-5">
+                            <img src="default.png" class="w-12 h-12 rounded-full bg-slate-800 shrink-0">
+                            <div class="flex-1 min-w-0">
+                                <div class="flex justify-between items-center mb-1">
                                     <div class="flex items-center gap-2">
-                                        <span class="font-bold text-white">@${p.user}</span>
-                                        ${p.user === DEV_NAME ? '<span class="dev-badge">DEV 🛠️</span>' : ''}
-                                        ${p.pinned ? '<span class="text-amber-400 text-[10px] font-bold">📌 PINNED</span>' : ''}
+                                        <span class="font-bold text-white tracking-tight">@${p.user}</span>
+                                        ${p.user === ADMIN ? '<span class="dev-badge">Core Dev</span>' : ''}
+                                        ${p.pinned ? '<span class="text-indigo-400 font-black text-[10px] tracking-widest">PINNED</span>' : ''}
                                     </div>
-                                    <div class="flex gap-3">
-                                        ${currentUser === DEV_NAME ? `<button onclick="togglePin('${p._id}')" class="text-[10px] text-slate-500">PIN</button>` : ''}
-                                        ${(p.user === currentUser || currentUser === DEV_NAME) ? `<button onclick="deletePost('${p._id}')" class="text-[10px] text-red-500">DELETE</button>` : ''}
+                                    <div class="flex gap-4">
+                                        ${currentUser === ADMIN ? `<button onclick="pinPost('${p._id}')" class="text-[10px] font-bold text-slate-500 hover:text-indigo-400 uppercase">Pin</button>` : ''}
+                                        ${(p.user === currentUser || currentUser === ADMIN) ? `<button onclick="deletePost('${p._id}')" class="text-[10px] font-bold text-slate-500 hover:text-red-500 uppercase">Delete</button>` : ''}
                                     </div>
                                 </div>
-                                <p class="text-slate-200 mt-2 text-[15px] whitespace-pre-wrap">${parseTags(p.text)}</p>
-                                ${p.img ? `<img src="${p.img}" class="post-img">` : ''}
+                                <p class="text-slate-200 leading-relaxed text-[15px] whitespace-pre-wrap">${parseContent(p.text)}</p>
+                                ${p.img ? `<img src="${p.img}" class="w-full mt-4 rounded-2xl border border-white/10 shadow-2xl">` : ''}
                                 
-                                <div class="flex gap-8 mt-4 text-xs font-bold text-slate-500">
-                                    <button onclick="toggleLike('${p._id}')" class="${p.likes?.includes(currentUser) ? 'text-pink-500' : ''}">❤️ ${p.likes?.length || 0}</button>
-                                    <div>💬 ${p.replies?.length || 0}</div>
+                                <div class="mt-6 flex gap-8">
+                                    <button class="flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-pink-500 transition-colors">
+                                        ❤️ ${p.likes?.length || 0}
+                                    </button>
+                                    <div class="flex items-center gap-2 text-xs font-bold text-slate-500">
+                                        💬 ${p.replies?.length || 0}
+                                    </div>
                                 </div>
 
-                                <div class="mt-4 space-y-3 pl-4 border-l border-white/5">
-                                    ${p.replies?.map(r => `<div class="text-[13px] text-slate-300"><span class="text-indigo-400 font-bold">@${r.user}</span>: ${parseTags(r.text)}</div>`).join('') || ''}
-                                    <div class="flex gap-2 mt-2">
-                                        <input id="re-${p._id}" onfocus="activeInput=true" onblur="setTimeout(()=>activeInput=false, 200)" placeholder="Reply..." class="flex-1 bg-slate-900/40 border border-white/5 rounded-full px-4 py-1.5 text-xs text-white outline-none">
-                                        <button onclick="addReply('${p._id}')" class="text-indigo-400 text-[10px] font-bold uppercase">Send</button>
+                                <div class="mt-6 space-y-4 pl-5 border-l border-white/5">
+                                    ${p.replies?.map(r => `
+                                        <div class="text-[13px] text-slate-400">
+                                            <span class="text-indigo-400 font-bold">@${r.user}</span> ${parseContent(r.text)}
+                                        </div>
+                                    `).join('') || ''}
+                                    
+                                    <div class="flex gap-3 pt-2">
+                                        <input id="reply-for-${p._id}" 
+                                               onfocus="isTyping=true" onblur="setTimeout(()=>isTyping=false, 200)"
+                                               placeholder="Type a response..." 
+                                               class="flex-1 bg-slate-900/50 border border-white/10 rounded-xl px-4 py-2 text-xs text-white outline-none focus:border-indigo-500/50 transition-all">
+                                        <button onclick="sendReply('${p._id}')" class="text-indigo-400 font-black text-[10px] uppercase tracking-widest px-2">Reply</button>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 `).join('');
-            } catch(e) {}
+            } catch (e) {}
         }
 
-        function handleFile(e) {
+        async function fetchUsers() {
+            const res = await fetch('/api/users');
+            const users = await res.json();
+            document.getElementById('user-list').innerHTML = users.map(u => `
+                <div class="flex items-center gap-3">
+                    <img src="default.png" class="w-8 h-8 rounded-full bg-slate-800">
+                    <span class="text-sm font-semibold text-slate-300">@${u.username}</span>
+                </div>
+            `).join('');
+        }
+
+        async function checkAlerts() {
+            const res = await fetch(`/api/notifications/${currentUser}`);
+            const data = await res.json();
+            document.getElementById('notif-dot').style.display = data.length > 0 ? 'block' : 'none';
+            document.getElementById('notif-list').innerHTML = data.map(n => `
+                <div class="bg-white/5 p-3 rounded-xl flex justify-between items-center text-[11px] border border-white/5">
+                    <span class="text-slate-300"><b>@${n.fromUser}</b> mentioned you</span>
+                    <button onclick="clearAlert('${n._id}')" class="text-red-400 font-black ml-4">X</button>
+                </div>
+            `).join('') || '<p class="text-[10px] text-slate-600 text-center py-4">No signals detected.</p>';
+        }
+
+        async function clearAlert(id) {
+            await fetch('/api/notifications/clear', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ id })
+            });
+            checkAlerts();
+        }
+
+        // --- UTILS ---
+        function toggleNotifPanel() { document.getElementById('notif-panel').classList.toggle('hidden'); }
+        function previewImage(e) {
             const reader = new FileReader();
             reader.onload = () => {
-                currentImg = reader.result;
-                document.getElementById('preview-area').innerHTML = `<img src="${currentImg}" class="h-20 rounded mt-2">`;
+                currentImage = reader.result;
+                document.getElementById('preview-area').innerHTML = `<img src="${currentImage}">`;
             };
             if(e.target.files[0]) reader.readAsDataURL(e.target.files[0]);
         }
-
-        function logout() { localStorage.removeItem('currentUser'); location.reload(); }
+        function logout() { localStorage.clear(); location.reload(); }
     </script>
 </body>
 </html>
