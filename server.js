@@ -41,7 +41,7 @@ const UserSchema = new mongoose.Schema({
 const MessageSchema = new mongoose.Schema({
     user: String,
     text: String,
-    timestamp: { type: Date, default: Date.now } // Store as UTC Date for local conversion
+    timestamp: { type: Date, default: Date.now }
 });
 
 const User = mongoose.model('User', UserSchema);
@@ -54,7 +54,8 @@ app.post('/api/auth/register', async (req, res) => {
     try {
         const { username, email, password } = req.body;
         
-        // Explicit Role Assignment: "developer" is Developer, everyone else is Member
+        // Logic: strictly "developer" username gets Developer rank. 
+        // Everyone else is "Member".
         const role = (username.toLowerCase() === "developer") ? "Developer" : "Member";
         
         const user = new User({ 
@@ -143,10 +144,7 @@ app.post('/api/messages', async (req, res) => {
         const { user, text } = req.body;
         const newMessage = new Message({ user, text });
         await newMessage.save();
-        
-        // Update user activity
         await User.updateOne({ username: user }, { lastSeen: new Date() });
-        
         res.json(newMessage);
     } catch (err) {
         res.status(500).json({ error: "Failed to broadcast message" });
