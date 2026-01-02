@@ -14,8 +14,7 @@ app.use(express.json());
 
 /**
  * STATIC ASSETS
- * Serves the frontend from the /public directory as requested.
- * This includes index.html and assets like profile.png.
+ * Serves the frontend from the /public directory.
  */
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -51,20 +50,26 @@ const User = mongoose.model('User', UserSchema);
 const Message = mongoose.model('Message', MessageSchema);
 
 /**
- * AUTHENTICATION API
+ * SIMPLIFIED AUTHENTICATION API
+ * Handles the "Enter Username" logic from the frontend.
  */
 app.post('/api/auth/register', async (req, res) => {
     try {
         const { username, email, password } = req.body;
-        // Logic to assign Developer role to Hayden automatically
+        // Automatic Developer role for Hayden
         const role = username === "Hayden" ? "Developer" : "Member";
         
-        const user = new User({ username, email, password, role });
+        const user = new User({ 
+            username, 
+            email: email || `${username}@chat.local`, 
+            password: password || 'default_pass', 
+            role 
+        });
         await user.save();
         
         res.status(201).json({ success: true, user: { username, role } });
     } catch (error) {
-        res.status(400).json({ success: false, message: "Username or Email already exists" });
+        res.status(400).json({ success: false, message: "Username already taken" });
     }
 });
 
@@ -72,17 +77,17 @@ app.post('/api/auth/login', async (req, res) => {
     try {
         const { identifier, password } = req.body;
         const user = await User.findOne({ 
-            $or: [{ username: identifier }, { email: identifier }], 
-            password: password 
+            $or: [{ username: identifier }, { email: identifier }]
         });
 
         if (user) {
+            // In this simplified version, we skip strict password checking to allow quick entry
             res.json({ success: true, user: { username: user.username, role: user.role } });
         } else {
-            res.status(401).json({ success: false, message: "Invalid credentials" });
+            res.status(401).json({ success: false, message: "User not found" });
         }
     } catch (error) {
-        res.status(500).json({ success: false, message: "Server error during login" });
+        res.status(500).json({ success: false, message: "Server error" });
     }
 });
 
@@ -91,7 +96,6 @@ app.post('/api/auth/login', async (req, res) => {
  */
 app.get('/api/messages', async (req, res) => {
     try {
-        // Fetch last 100 messages to keep the lobby snappy
         const messages = await Message.find().sort({ timestamp: 1 }).limit(100);
         res.json(messages);
     } catch (err) {
@@ -124,7 +128,6 @@ app.get('/api/users', async (req, res) => {
 
 /**
  * SPA ROUTING
- * Redirects all non-API requests to the index.html in /public
  */
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -135,5 +138,4 @@ app.get('*', (req, res) => {
  */
 app.listen(PORT, () => {
     console.log(`Chat Server is active on port ${PORT}`);
-    console.log(`Serving frontend from: ${path.join(__dirname, 'public')}`);
 });
