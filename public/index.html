@@ -43,8 +43,8 @@
                 <div id="messages-container" class="flex-grow overflow-y-auto custom-scrollbar p-4 space-y-4 pb-24"></div>
 
                 <div class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-slate-900 via-slate-900 to-transparent">
-                    <form onsubmit="sendMessage(event)" class="max-w-4xl mx-auto flex gap-2">
-                        <input type="text" id="msg-input" placeholder="Type a message..." autocomplete="off"
+                    <form id="chat-form" onsubmit="sendMessage(event)" class="max-w-4xl mx-auto flex gap-2">
+                        <input type="text" id="msg-input" placeholder="Type a message or /clear..." autocomplete="off"
                             class="flex-grow bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 outline-none">
                         <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 p-3 rounded-xl transition">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -116,6 +116,10 @@
             try {
                 const res = await fetch('/api/messages');
                 const messages = await res.json();
+                
+                // If messages are returned as null or empty after a clear, handle it
+                if (!res.ok) return;
+
                 const container = document.getElementById('messages-container');
                 const shouldScroll = container.scrollTop + container.clientHeight >= container.scrollHeight - 50;
 
@@ -144,6 +148,20 @@
             const text = input.value.trim();
             if (!text) return;
 
+            // Handle /clear command
+            if (text.toLowerCase() === '/clear') {
+                if (currentUser.role !== 'Developer') {
+                    showSystemMessage("You do not have permission to use this command.");
+                    input.value = "";
+                    return;
+                }
+                if (confirm("DANGER: This will delete ALL users and messages permanently. Proceed?")) {
+                    handleClearCommand();
+                }
+                input.value = "";
+                return;
+            }
+
             const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             
             try {
@@ -155,6 +173,34 @@
                 input.value = "";
                 fetchMessages();
             } catch (err) {}
+        }
+
+        async function handleClearCommand() {
+            try {
+                const res = await fetch('/api/admin/clear-all', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ adminUsername: currentUser.username })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert("System cleared. You will be logged out.");
+                    logout(); // Logout because account is deleted
+                } else {
+                    alert(data.message);
+                }
+            } catch (err) {
+                alert("Error executing clear command.");
+            }
+        }
+
+        function showSystemMessage(text) {
+            const container = document.getElementById('messages-container');
+            const div = document.createElement('div');
+            div.className = "flex justify-center my-2";
+            div.innerHTML = `<span class="bg-slate-800 text-slate-400 text-xs px-3 py-1 rounded-full border border-slate-700">${text}</span>`;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
         }
 
         async function fetchUsers() {
@@ -183,7 +229,6 @@
             } catch (err) {}
         }
 
-        // Admin Functionality
         function handleUserClick(targetUsername) {
             if (currentUser.role !== 'Developer') return;
             selectedUserForAdmin = targetUsername;
