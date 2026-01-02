@@ -14,13 +14,11 @@ app.use(express.json());
 
 /**
  * STATIC ASSETS
- * Serves the frontend from the /public directory.
  */
 app.use(express.static(path.join(__dirname, 'public')));
 
 /**
  * DATABASE CONNECTION
- * Using the provided MONGODB_URI for the vikvok_live cluster.
  */
 const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://hayden:123password123@cluster0.57lnswh.mongodb.net/vikvok_live?retryWrites=true&w=majority";
 
@@ -36,6 +34,7 @@ const UserSchema = new mongoose.Schema({
     email: { type: String },
     password: { type: String, required: true },
     role: { type: String, default: 'Member' },
+    lastSeen: { type: Date, default: Date.now }, // Track activity
     createdAt: { type: Date, default: Date.now }
 });
 
@@ -50,20 +49,19 @@ const User = mongoose.model('User', UserSchema);
 const Message = mongoose.model('Message', MessageSchema);
 
 /**
- * SIMPLIFIED AUTHENTICATION API
- * Handles the "Enter Username" logic from the frontend.
+ * AUTHENTICATION API
  */
 app.post('/api/auth/register', async (req, res) => {
     try {
         const { username, email, password } = req.body;
-        // Automatic Developer role for Hayden
         const role = username === "Hayden" ? "Developer" : "Member";
         
         const user = new User({ 
             username, 
             email: email || `${username}@chat.local`, 
             password: password || 'default_pass', 
-            role 
+            role,
+            lastSeen: new Date()
         });
         await user.save();
         
@@ -75,19 +73,34 @@ app.post('/api/auth/register', async (req, res) => {
 
 app.post('/api/auth/login', async (req, res) => {
     try {
-        const { identifier, password } = req.body;
-        const user = await User.findOne({ 
-            $or: [{ username: identifier }, { email: identifier }]
-        });
+        const { identifier } = req.body;
+        const user = await User.findOneAndUpdate(
+            { $or: [{ username: identifier }, { email: identifier }] },
+            { lastSeen: new Date() }, // Update activity on login
+            { new: true }
+        );
 
         if (user) {
-            // In this simplified version, we skip strict password checking to allow quick entry
             res.json({ success: true, user: { username: user.username, role: user.role } });
         } else {
             res.status(401).json({ success: false, message: "User not found" });
         }
     } catch (error) {
         res.status(500).json({ success: false, message: "Server error" });
+    }
+});
+
+/**
+ * HEARTBEAT API
+ * Updates the user's lastSeen timestamp to keep them "Online"
+ */
+app.post('/api/heartbeat', async (req, res) => {
+    try {
+        const { username } = req.body;
+        await User.updateOne({ username }, { lastSeen: new Date() });
+        res.sendStatus(200);
+    } catch (err) {
+        res.sendStatus(500);
     }
 });
 
@@ -108,6 +121,8 @@ app.post('/api/messages', async (req, res) => {
         const { user, text, time } = req.body;
         const newMessage = new Message({ user, text, time });
         await newMessage.save();
+        // Also update activity when sending a message
+        await User.updateOne({ username: user }, { lastSeen: new Date() });
         res.json(newMessage);
     } catch (err) {
         res.status(500).json({ error: "Failed to broadcast message" });
@@ -116,11 +131,21 @@ app.post('/api/messages', async (req, res) => {
 
 /**
  * USER DIRECTORY API
+ * Calculates isOnline based on lastSeen (within last 30 seconds)
  */
 app.get('/api/users', async (req, res) => {
     try {
-        const users = await User.find({}, 'username role');
-        res.json(users);
+        const users = await User.find({}, 'username role lastSeen');
+        const now = new Date();
+        const thirtySecondsAgo = new Date(now.getTime() - 30000);
+
+        const processedUsers = users.map(u => ({
+            username: u.username,
+            role: u.role,
+            isOnline: u.lastSeen > thirtySecondsAgo
+        }));
+
+        res.json(processedUsers);
     } catch (err) {
         res.status(500).json([]);
     }
@@ -137,5 +162,5 @@ app.get('*', (req, res) => {
  * SERVER START
  */
 app.listen(PORT, () => {
-    console.log(`Chat Server is active on port ${PORT}`);
+    console.log(`Chat Server active on port ${PORT}`);
 });
