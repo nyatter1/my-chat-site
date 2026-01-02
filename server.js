@@ -31,10 +31,10 @@ mongoose.connect(MONGODB_URI)
  */
 const UserSchema = new mongoose.Schema({
     username: { type: String, unique: true, required: true },
-    email: { type: String },
+    email: { type: String, unique: true },
     password: { type: String, required: true },
     role: { type: String, default: 'Member' },
-    lastSeen: { type: Date, default: Date.now }, // Track activity
+    lastSeen: { type: Date, default: Date.now },
     createdAt: { type: Date, default: Date.now }
 });
 
@@ -54,12 +54,13 @@ const Message = mongoose.model('Message', MessageSchema);
 app.post('/api/auth/register', async (req, res) => {
     try {
         const { username, email, password } = req.body;
+        // Logic to assign Developer role to Hayden automatically
         const role = username === "Hayden" ? "Developer" : "Member";
         
         const user = new User({ 
             username, 
-            email: email || `${username}@chat.local`, 
-            password: password || 'default_pass', 
+            email, 
+            password, 
             role,
             lastSeen: new Date()
         });
@@ -67,32 +68,32 @@ app.post('/api/auth/register', async (req, res) => {
         
         res.status(201).json({ success: true, user: { username, role } });
     } catch (error) {
-        res.status(400).json({ success: false, message: "Username already taken" });
+        res.status(400).json({ success: false, message: "Username or Email already exists" });
     }
 });
 
 app.post('/api/auth/login', async (req, res) => {
     try {
-        const { identifier } = req.body;
-        const user = await User.findOneAndUpdate(
-            { $or: [{ username: identifier }, { email: identifier }] },
-            { lastSeen: new Date() }, // Update activity on login
-            { new: true }
-        );
+        const { identifier, password } = req.body;
+        // Check for username OR email matches and then verify password
+        const user = await User.findOne({ 
+            $or: [{ username: identifier }, { email: identifier }]
+        });
 
-        if (user) {
+        if (user && user.password === password) {
+            user.lastSeen = new Date();
+            await user.save();
             res.json({ success: true, user: { username: user.username, role: user.role } });
         } else {
-            res.status(401).json({ success: false, message: "User not found" });
+            res.status(401).json({ success: false, message: "Invalid username or password" });
         }
     } catch (error) {
-        res.status(500).json({ success: false, message: "Server error" });
+        res.status(500).json({ success: false, message: "Server error during login" });
     }
 });
 
 /**
  * HEARTBEAT API
- * Updates the user's lastSeen timestamp to keep them "Online"
  */
 app.post('/api/heartbeat', async (req, res) => {
     try {
@@ -121,7 +122,7 @@ app.post('/api/messages', async (req, res) => {
         const { user, text, time } = req.body;
         const newMessage = new Message({ user, text, time });
         await newMessage.save();
-        // Also update activity when sending a message
+        // Update user activity whenever they send a message
         await User.updateOne({ username: user }, { lastSeen: new Date() });
         res.json(newMessage);
     } catch (err) {
@@ -131,7 +132,7 @@ app.post('/api/messages', async (req, res) => {
 
 /**
  * USER DIRECTORY API
- * Calculates isOnline based on lastSeen (within last 30 seconds)
+ * Shows online/offline status based on lastSeen activity
  */
 app.get('/api/users', async (req, res) => {
     try {
@@ -153,7 +154,13 @@ app.get('/api/users', async (req, res) => {
 
 /**
  * SPA ROUTING
+ * Serves the login page if the user is not authenticated 
+ * (Handled primarily by client-side logic, but we provide the file)
  */
+app.get('/login', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
