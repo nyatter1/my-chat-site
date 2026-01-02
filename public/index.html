@@ -34,7 +34,7 @@
                 <div class="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center font-bold text-xl">C</div>
                 <div>
                     <h2 class="font-bold text-lg leading-none">Live Lobby</h2>
-                    <span id="online-count" class="text-xs text-green-400">Updating...</span>
+                    <span id="online-count-badge" class="text-xs text-green-400">0 Online</span>
                 </div>
             </div>
             <button onclick="window.location.reload()" class="text-slate-400 hover:text-white text-sm bg-slate-700 px-3 py-1 rounded-md transition">Leave</button>
@@ -43,8 +43,13 @@
         <div class="flex flex-grow overflow-hidden">
             <!-- Sidebar -->
             <aside class="hidden md:flex w-64 bg-slate-800/50 border-r border-slate-700 flex-col">
-                <div class="p-4 font-bold border-b border-slate-700 text-slate-400 text-xs uppercase tracking-widest">Users</div>
-                <div id="user-list" class="flex-grow overflow-y-auto custom-scrollbar p-2 space-y-1"></div>
+                <!-- Online Section -->
+                <div class="p-4 font-bold border-b border-slate-700 text-green-400 text-xs uppercase tracking-widest bg-slate-800/30">Online</div>
+                <div id="user-list-online" class="max-h-[50%] overflow-y-auto custom-scrollbar p-2 space-y-1"></div>
+                
+                <!-- Offline Section -->
+                <div class="p-4 font-bold border-t border-b border-slate-700 text-slate-500 text-xs uppercase tracking-widest bg-slate-800/30">Offline</div>
+                <div id="user-list-offline" class="flex-grow overflow-y-auto custom-scrollbar p-2 space-y-1"></div>
             </aside>
 
             <!-- Main Chat -->
@@ -74,19 +79,17 @@
             const username = document.getElementById('username-input').value.trim();
             if (!username) return;
 
-            // Using your existing register endpoint to create/set the user session
             try {
                 const res = await fetch('/api/auth/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
                         username: username, 
-                        password: 'default_password', // Bypassing password for simplicity
+                        password: 'default_password',
                         email: `${username}@chat.local` 
                     })
                 });
                 
-                // If user exists, try to log them in instead
                 if (res.status === 400) {
                    const loginRes = await fetch('/api/auth/login', {
                        method: 'POST',
@@ -102,7 +105,6 @@
                     if (data.success) startSession(data.user);
                 }
             } catch (err) {
-                // Fallback for UI if server is unreachable
                 startSession({ username: username, role: 'Member' });
             }
         }
@@ -114,8 +116,25 @@
             
             fetchMessages();
             fetchUsers();
+            
+            // Heartbeat and Fetch loops
             setInterval(fetchMessages, 2000);
             setInterval(fetchUsers, 5000);
+            
+            // Start heartbeat to tell server we are online
+            sendHeartbeat();
+            setInterval(sendHeartbeat, 10000);
+        }
+
+        async function sendHeartbeat() {
+            if (!currentUser) return;
+            try {
+                await fetch('/api/heartbeat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: currentUser.username })
+                });
+            } catch (err) {}
         }
 
         async function fetchMessages() {
@@ -167,13 +186,22 @@
             try {
                 const res = await fetch('/api/users');
                 const users = await res.json();
-                document.getElementById('online-count').innerText = `${users.length} Users Registered`;
-                document.getElementById('user-list').innerHTML = users.map(u => `
-                    <div class="flex items-center gap-2 p-2 hover:bg-slate-700/50 rounded-lg">
-                        <div class="w-2 h-2 bg-green-500 rounded-full"></div>
-                        <span class="text-sm">${u.username}</span>
+                
+                const onlineUsers = users.filter(u => u.isOnline);
+                const offlineUsers = users.filter(u => !u.isOnline);
+
+                document.getElementById('online-count-badge').innerText = `${onlineUsers.length} Online`;
+
+                const renderUser = (u, colorClass) => `
+                    <div class="flex items-center gap-2 p-2 hover:bg-slate-700/50 rounded-lg transition">
+                        <div class="w-2 h-2 ${colorClass} rounded-full"></div>
+                        <span class="text-sm ${colorClass === 'bg-slate-600' ? 'text-slate-500' : 'text-slate-200'}">${u.username}</span>
                     </div>
-                `).join('');
+                `;
+
+                document.getElementById('user-list-online').innerHTML = onlineUsers.map(u => renderUser(u, 'bg-green-500')).join('');
+                document.getElementById('user-list-offline').innerHTML = offlineUsers.map(u => renderUser(u, 'bg-slate-600')).join('');
+                
             } catch (err) {}
         }
 
