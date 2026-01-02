@@ -6,377 +6,179 @@
     <title>ChatApp - Home</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
         
-        .pfp-logo-glow {
-            transition: all 0.3s ease;
-        }
-        
-        /* Rank Glows */
-        .rank-glow-Developer { box-shadow: 0 0 15px rgba(168, 85, 247, 0.5); border-color: #a855f7 !important; }
-        .rank-glow-Owner { box-shadow: 0 0 15px rgba(239, 68, 68, 0.5); border-color: #ef4444 !important; }
-        .rank-glow-Member { border-color: #334155 !important; }
-
-        .rank-icon { width: 14px; height: 14px; object-fit: contain; }
-
-        /* Notification Popup Style */
-        #reveal-popup {
-            animation: slideIn 0.3s ease-out;
-        }
         @keyframes slideIn {
-            from { transform: translateY(100%) translateX(-50%); opacity: 0; }
-            to { transform: translateY(0) translateX(-50%); opacity: 1; }
+            from { transform: translateX(-20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
         }
-
-        /* Dropdown Animation */
-        .dropdown-animate {
-            transform-origin: top right;
-            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.2s ease;
-        }
-        .dropdown-hidden {
-            transform: scale(0.95);
-            opacity: 0;
-            pointer-events: none;
-        }
-        .dropdown-show {
-            transform: scale(1);
-            opacity: 1;
-            pointer-events: auto;
-        }
+        .animate-slide { animation: slideIn 0.3s ease forwards; }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-200 min-h-screen font-sans overflow-hidden">
+<body class="bg-slate-950 text-slate-200 min-h-screen font-sans flex flex-col overflow-hidden">
 
-    <!-- Global Reveal Notification Popup -->
-    <div id="reveal-popup" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] w-full max-w-sm px-4">
-        <div class="bg-indigo-600 border border-indigo-400 p-5 rounded-2xl shadow-2xl">
-            <h4 class="font-bold text-white mb-1 text-sm">Identity Reveal Request</h4>
-            <p id="reveal-msg-text" class="text-indigo-100 text-[11px] mb-4"></p>
-            <div class="flex gap-2">
-                <button onclick="respondReveal(true)" class="flex-1 bg-white text-indigo-600 font-bold py-2 rounded-lg text-xs hover:bg-indigo-50 transition">Yes, Reveal</button>
-                <button onclick="respondReveal(false)" class="flex-1 bg-indigo-700 text-white font-bold py-2 rounded-lg text-xs hover:bg-indigo-800 transition">No</button>
+    <!-- Top Navigation Bar -->
+    <header class="bg-slate-900 border-b border-slate-800 p-4 flex justify-between items-center z-50 shadow-2xl">
+        <div class="flex items-center gap-4">
+            <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                </svg>
             </div>
-        </div>
-    </div>
-
-    <!-- Top Navigation -->
-    <header class="bg-slate-900 border-b border-slate-800 p-3 flex justify-between items-center sticky top-0 z-50">
-        <div class="flex items-center gap-3">
-            <!-- DYNAMIC PFP LOGO -->
-            <div class="relative">
-                <button onclick="toggleDropdown()" id="profile-trigger" class="relative group block focus:outline-none">
-                    <div id="nav-pfp-container" class="w-10 h-10 rounded-xl overflow-hidden border-2 border-slate-700 bg-slate-800 pfp-logo-glow flex items-center justify-center font-bold">
-                        <img id="nav-pfp-img" src="" class="w-full h-full object-cover hidden">
-                        <span id="nav-pfp-initial">?</span>
-                    </div>
-                    <div class="absolute -bottom-1 -right-1 w-3 h-3 bg-emerald-500 border-2 border-slate-900 rounded-full"></div>
-                </button>
-
-                <!-- Dropdown Menu -->
-                <div id="nav-dropdown" class="dropdown-hidden dropdown-animate absolute left-0 mt-3 w-56 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl py-2 z-50 overflow-hidden">
-                    <div class="px-4 py-2 border-b border-slate-800 mb-1">
-                        <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Personal</p>
-                    </div>
-                    <a href="/profile.html" class="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-800 text-sm font-bold transition">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                        Edit Profile
-                    </a>
-                    <a href="/themes.html" class="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-800 text-sm font-bold transition">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
-                        </svg>
-                        Themes
-                    </a>
-                    
-                    <div class="px-4 py-2 border-b border-slate-800 mt-2 mb-1">
-                        <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Features</p>
-                    </div>
-                    <a href="/secret.html" class="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-800 text-sm font-bold transition text-purple-400">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                        </svg>
-                        Secret Messages
-                    </a>
-                    <a id="admin-dropdown-link" href="/admin.html" class="hidden flex items-center gap-3 px-4 py-2.5 hover:bg-red-900/20 text-sm font-bold transition text-red-500">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                        </svg>
-                        Admin Panel
-                    </a>
-
-                    <div class="h-px bg-slate-800 my-1"></div>
-                    <button onclick="logout()" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-950 text-sm font-bold transition text-red-400">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                        </svg>
-                        Logout
-                    </button>
-                </div>
-            </div>
-
             <div>
-                <h1 id="nav-username" class="text-sm font-black italic tracking-tight">@username</h1>
-                <p id="online-count-badge" class="text-[9px] text-emerald-500 uppercase font-bold tracking-widest leading-none">0 Online</p>
+                <h1 class="text-xl font-black italic tracking-tighter text-white uppercase leading-none">ChatApp</h1>
+                <p class="text-[9px] text-slate-500 uppercase font-bold tracking-[0.2em] mt-1">Global Network v4.0</p>
             </div>
         </div>
 
-        <div class="flex items-center gap-2">
-            <a id="admin-link" href="/admin.html" class="hidden p-2 hover:bg-red-900/20 rounded-xl transition text-red-500">
+        <nav class="flex items-center gap-2">
+            <a href="/themes.html" class="p-2.5 hover:bg-slate-800 rounded-xl transition text-slate-400 hover:text-white" title="Themes">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.172-1.172a4 4 0 115.656 5.656L10 17.657" />
                 </svg>
             </a>
-            <a href="/secret.html" class="p-2 hover:bg-slate-800 rounded-xl transition text-purple-400">
+            <a href="/profile.html" class="p-2.5 hover:bg-slate-800 rounded-xl transition text-slate-400 hover:text-white" title="Profile">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
             </a>
-        </div>
+            <div id="admin-link-container" class="hidden">
+                <a href="/admin.html" class="p-2.5 hover:bg-red-900/20 rounded-xl transition text-red-500" title="Admin Panel">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                </a>
+            </div>
+        </nav>
     </header>
 
-    <div class="flex h-[calc(100vh-65px)]">
-        <!-- Sidebar -->
-        <aside class="w-20 md:w-64 border-r border-slate-800 bg-slate-900/50 hidden sm:flex flex-col">
-            <div class="flex-1 custom-scrollbar overflow-y-auto">
-                <div class="p-4 font-bold border-b border-slate-800 text-emerald-500 text-[10px] uppercase tracking-widest bg-slate-900/30">Online</div>
-                <div id="user-list-online" class="p-2 space-y-1"></div>
-                
-                <div class="p-4 font-bold border-t border-b border-slate-800 text-slate-500 text-[10px] uppercase tracking-widest bg-slate-900/30">Offline</div>
-                <div id="user-list-offline" class="p-2 space-y-1"></div>
-            </div>
-            
-            <div class="p-4 border-t border-slate-800 bg-slate-900/80">
-                <div class="flex items-center gap-3">
-                    <div id="side-pfp-container" class="w-8 h-8 rounded-lg overflow-hidden border border-slate-700 bg-slate-800 flex items-center justify-center">
-                        <img id="side-pfp-img" src="" class="w-full h-full object-cover hidden">
-                        <span id="side-pfp-initial" class="text-xs">?</span>
-                    </div>
-                    <div class="overflow-hidden hidden md:block">
-                        <p id="side-username" class="text-xs font-bold text-white truncate">@username</p>
-                        <p id="side-role" class="text-[8px] text-slate-500 uppercase font-black">Member</p>
-                    </div>
+    <!-- Main Content -->
+    <main class="flex-grow flex overflow-hidden">
+        <!-- Sidebar: Active Users -->
+        <aside class="w-64 bg-slate-900/50 border-r border-slate-800 flex flex-col hidden md:flex">
+            <div class="p-6">
+                <h3 class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-4">Active Now</h3>
+                <div id="user-list" class="space-y-2 overflow-y-auto custom-scrollbar pr-2">
+                    <!-- Users injected here -->
                 </div>
             </div>
         </aside>
 
-        <!-- Main Content -->
-        <main class="flex-1 flex flex-col bg-slate-950">
-            <div id="messages-container" class="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar"></div>
+        <!-- Chat Area -->
+        <section class="flex-grow flex flex-col relative">
+            <div id="chat-feed" class="flex-grow p-6 overflow-y-auto custom-scrollbar space-y-4">
+                <!-- Messages injected here -->
+                <div class="flex justify-center py-10">
+                    <div class="text-center">
+                        <div class="w-12 h-12 bg-slate-800 rounded-full mx-auto mb-4 flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 00-2 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                            </svg>
+                        </div>
+                        <p class="text-xs text-slate-500 font-bold uppercase tracking-widest">End-to-End Encrypted Session</p>
+                    </div>
+                </div>
+            </div>
 
-            <div class="p-4 border-t border-slate-800 bg-slate-900/30">
-                <form onsubmit="sendMessage(event)" class="max-w-4xl mx-auto relative">
-                    <input type="text" id="msg-input" placeholder="Message #general..." autocomplete="off"
-                        class="w-full bg-slate-900 border border-slate-800 rounded-2xl py-4 px-6 pr-16 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-600 transition">
-                    <button type="submit" class="absolute right-3 top-2 bottom-2 px-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl transition shadow-lg active:scale-95">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            <!-- Input Bar -->
+            <div class="p-6 bg-slate-950/80 backdrop-blur-md">
+                <form onsubmit="sendMessage(event)" class="max-w-4xl mx-auto flex gap-3">
+                    <input type="text" id="message-input" 
+                        class="flex-grow bg-slate-900 border border-slate-800 rounded-2xl px-6 py-4 text-sm text-white focus:outline-none focus:border-indigo-500 transition-all shadow-inner"
+                        placeholder="Type a message..." autocomplete="off">
+                    <button type="submit" id="send-btn" class="bg-indigo-600 hover:bg-indigo-500 text-white p-4 rounded-2xl transition shadow-lg shadow-indigo-500/20 active:scale-95">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                         </svg>
                     </button>
                 </form>
             </div>
-        </main>
-    </div>
+        </section>
+    </main>
 
     <script>
         let currentUser = null;
-        let currentSecretRequestId = null;
 
         window.onload = () => {
             const savedUser = localStorage.getItem('chat_user');
-            if (!savedUser) return window.location.href = '/login.html';
-            
+            if (!savedUser) {
+                window.location.href = '/login.html';
+                return;
+            }
             currentUser = JSON.parse(savedUser);
-            updateUserUI();
-            applySavedTheme();
             
-            fetchMessages(true);
-            fetchUsers();
-            setInterval(fetchMessages, 3000);
-            setInterval(fetchUsers, 5000);
-            setInterval(checkRevealRequests, 4000);
-
-            window.addEventListener('storage', (e) => {
-                if (e.key === 'chat_user' && e.newValue) {
-                    currentUser = JSON.parse(e.newValue);
-                    updateUserUI();
-                }
-            });
+            checkAdminStatus();
+            applyTheme();
+            loadMockUsers();
         };
 
-        function getRankIcon(role) {
-            const r = role ? role.toLowerCase() : 'member';
-            if (r === 'developer') return '/developer.png';
-            if (r === 'owner') return '/owner.png';
-            return '/member.png';
+        function checkAdminStatus() {
+            if (currentUser.role === 'Developer' || currentUser.role === 'Owner') {
+                document.getElementById('admin-link-container').classList.remove('hidden');
+            }
         }
 
-        function updateUserUI() {
-            if (!currentUser) return;
-            const role = currentUser.role || 'Member';
-
-            document.getElementById('nav-username').innerText = `@${currentUser.username}`;
-            document.getElementById('side-username').innerText = `@${currentUser.username}`;
-            document.getElementById('side-role').innerText = role;
-
-            if (role === 'Developer' || role === 'Owner') {
-                document.getElementById('admin-link').classList.remove('hidden');
-                document.getElementById('admin-dropdown-link').classList.remove('hidden');
-            } else {
-                document.getElementById('admin-link').classList.add('hidden');
-                document.getElementById('admin-dropdown-link').classList.add('hidden');
-            }
-
-            const initialText = currentUser.username.charAt(0).toUpperCase();
-            
-            // FIX: Profile Pic Rendering logic
-            const updatePFP = (imgId, initialId) => {
-                const imgEl = document.getElementById(imgId);
-                const initEl = document.getElementById(initialId);
+        function applyTheme() {
+            const savedTheme = localStorage.getItem('user_theme');
+            if (savedTheme) {
+                const theme = JSON.parse(savedTheme);
+                const accentElements = document.querySelectorAll('.bg-indigo-600');
+                accentElements.forEach(el => {
+                    el.style.backgroundColor = theme.accent;
+                    el.style.boxShadow = `0 10px 15px -3px ${theme.accent}33`;
+                });
                 
-                // Only show image if it exists and looks like a data URL or valid path
-                if (currentUser.profilePic && currentUser.profilePic.length > 10) {
-                    imgEl.src = currentUser.profilePic;
-                    imgEl.classList.remove('hidden');
-                    initEl.classList.add('hidden');
-                } else {
-                    imgEl.classList.add('hidden');
-                    initEl.innerText = initialText;
-                    initEl.classList.remove('hidden');
-                }
-            };
-
-            updatePFP('nav-pfp-img', 'nav-pfp-initial');
-            updatePFP('side-pfp-img', 'side-pfp-initial');
-
-            const navCont = document.getElementById('nav-pfp-container');
-            navCont.className = `w-10 h-10 rounded-xl overflow-hidden border-2 bg-slate-800 pfp-logo-glow rank-glow-${role} flex items-center justify-center font-bold`;
-        }
-
-        function toggleDropdown() {
-            const dropdown = document.getElementById('nav-dropdown');
-            dropdown.classList.toggle('dropdown-hidden');
-            dropdown.classList.toggle('dropdown-show');
-        }
-
-        window.addEventListener('click', (e) => {
-            const dropdown = document.getElementById('nav-dropdown');
-            const trigger = document.getElementById('profile-trigger');
-            if (trigger && !trigger.contains(e.target) && !dropdown.contains(e.target)) {
-                dropdown.classList.add('dropdown-hidden');
-                dropdown.classList.remove('dropdown-show');
+                // Update focus ring via script if needed
+                const input = document.getElementById('message-input');
+                input.onfocus = () => input.style.borderColor = theme.accent;
+                input.onblur = () => input.style.borderColor = '#1e293b';
             }
-        });
-
-        async function fetchMessages(isInitial = false) {
-            try {
-                const res = await fetch('/api/messages');
-                const messages = await res.json();
-                const container = document.getElementById('messages-container');
-                const shouldScroll = container.scrollTop + container.clientHeight >= container.scrollHeight - 50;
-
-                container.innerHTML = messages.map(msg => {
-                    const isMe = msg.user === currentUser.username;
-                    return `
-                        <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'}">
-                            <span class="text-[10px] text-slate-500 mb-1 px-1">${msg.user}</span>
-                            <div class="${isMe ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-200'} p-3 rounded-2xl ${isMe ? 'rounded-tr-none' : 'rounded-tl-none'} max-w-[85%] shadow-md">
-                                <p class="text-sm">${msg.text}</p>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-
-                if (shouldScroll || isInitial) container.scrollTop = container.scrollHeight;
-            } catch (err) {}
         }
 
-        async function sendMessage(e) {
+        function loadMockUsers() {
+            const list = document.getElementById('user-list');
+            const mocks = ['System', 'Alice', 'Bob', 'Cipher'];
+            list.innerHTML = mocks.map(u => `
+                <div class="flex items-center gap-3 p-2 hover:bg-slate-800/50 rounded-xl transition cursor-pointer group">
+                    <div class="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-[10px] font-bold text-slate-400 group-hover:border-indigo-500/50">${u[0]}</div>
+                    <span class="text-xs font-medium text-slate-300 group-hover:text-white">${u}</span>
+                    <div class="ml-auto w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
+                </div>
+            `).join('');
+        }
+
+        function sendMessage(e) {
             e.preventDefault();
-            const input = document.getElementById('msg-input');
+            const input = document.getElementById('message-input');
+            const feed = document.getElementById('chat-feed');
             const text = input.value.trim();
             if (!text) return;
 
-            try {
-                await fetch('/api/messages', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user: currentUser.username, text })
-                });
-                input.value = "";
-                fetchMessages();
-            } catch (err) {}
-        }
+            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const msg = document.createElement('div');
+            msg.className = "flex flex-col items-end gap-1 animate-slide";
+            
+            // Get current accent color
+            const savedTheme = localStorage.getItem('user_theme');
+            const accentColor = savedTheme ? JSON.parse(savedTheme).accent : '#4f46e5';
 
-        async function fetchUsers() {
-            try {
-                const res = await fetch('/api/users');
-                const users = await res.json();
-                const online = users.filter(u => u.isOnline);
-                document.getElementById('online-count-badge').innerText = `${online.length} Online`;
-                
-                const render = u => `
-                    <div class="flex items-center justify-between p-2 hover:bg-white/5 rounded-xl transition">
-                        <div class="flex items-center gap-2">
-                            <div class="w-1.5 h-1.5 ${u.isOnline ? 'bg-emerald-500' : 'bg-slate-700'} rounded-full"></div>
-                            <span class="text-xs font-medium text-slate-300">${u.username}</span>
-                        </div>
-                        <img src="${getRankIcon(u.role)}" class="rank-icon" onerror="this.style.display='none'">
-                    </div>
-                `;
+            msg.innerHTML = `
+                <div class="bg-indigo-600 text-white p-3 px-4 rounded-2xl rounded-tr-none max-w-[80%] shadow-lg shadow-black/20" style="background-color: ${accentColor}">
+                    <p class="text-xs font-medium">${text}</p>
+                </div>
+                <span class="text-[9px] text-slate-500 uppercase font-black mr-1">${time}</span>
+            `;
 
-                document.getElementById('user-list-online').innerHTML = online.map(render).join('');
-                document.getElementById('user-list-offline').innerHTML = users.filter(u => !u.isOnline).map(render).join('');
-            } catch (err) {}
-        }
-
-        async function checkRevealRequests() {
-            if (!currentUser) return;
-            try {
-                const res = await fetch(`/api/secrets/check-requests?username=${currentUser.username}`);
-                const data = await res.json();
-                if (data.pendingRequest) {
-                    currentSecretRequestId = data.secretId;
-                    document.getElementById('reveal-msg-text').innerText = `${data.requester} wants to know who sent: "${data.message.substring(0, 50)}..."`;
-                    document.getElementById('reveal-popup').classList.remove('hidden');
-                }
-            } catch (err) {}
-        }
-
-        async function respondReveal(approved) {
-            if (!currentSecretRequestId) return;
-            try {
-                await fetch('/api/secrets/respond-reveal', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ secretId: currentSecretRequestId, approved })
-                });
-                document.getElementById('reveal-popup').classList.add('hidden');
-                currentSecretRequestId = null;
-            } catch (err) {}
-        }
-
-        function applySavedTheme() {
-            const theme = localStorage.getItem('user_theme');
-            if (theme) {
-                try {
-                    const { accent } = JSON.parse(theme);
-                    if (accent) {
-                        const style = document.createElement('style');
-                        style.innerHTML = `.bg-indigo-600 { background-color: var(--theme-accent) !important; } .text-indigo-600 { color: var(--theme-accent) !important; }`;
-                        document.head.appendChild(style);
-                        document.documentElement.style.setProperty('--theme-accent', accent);
-                    }
-                } catch(e) {}
-            }
-        }
-
-        function logout() {
-            localStorage.removeItem('chat_user');
-            window.location.href = '/login.html';
+            feed.appendChild(msg);
+            feed.scrollTop = feed.scrollHeight;
+            input.value = "";
         }
     </script>
 </body>
