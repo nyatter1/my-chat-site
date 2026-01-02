@@ -54,8 +54,10 @@ const Message = mongoose.model('Message', MessageSchema);
 app.post('/api/auth/register', async (req, res) => {
     try {
         const { username, email, password } = req.body;
-        // Logic to assign Developer role to Hayden automatically
-        const role = username === "Hayden" ? "Developer" : "Member";
+        
+        // CHECK IF THIS IS THE FIRST USER EVER
+        const userCount = await User.countDocuments();
+        const role = userCount === 0 ? "Developer" : "Member";
         
         const user = new User({ 
             username, 
@@ -75,7 +77,6 @@ app.post('/api/auth/register', async (req, res) => {
 app.post('/api/auth/login', async (req, res) => {
     try {
         const { identifier, password } = req.body;
-        // Check for username OR email matches and then verify password
         const user = await User.findOne({ 
             $or: [{ username: identifier }, { email: identifier }]
         });
@@ -88,37 +89,52 @@ app.post('/api/auth/login', async (req, res) => {
             res.status(401).json({ success: false, message: "Invalid username or password" });
         }
     } catch (error) {
-        res.status(500).json({ success: false, message: "Server error during login" });
+        res.status(500).json({ success: false, message: "Server error" });
     }
 });
 
 /**
- * ADMIN API: DELETE USER
- * Only allows a user with the 'Developer' role to delete an account.
+ * ADMIN API: DELETE SINGLE USER
  */
 app.delete('/api/admin/users/:username', async (req, res) => {
     try {
-        const { adminUsername } = req.query; // Sender of the request
+        const { adminUsername } = req.query;
         const targetUsername = req.params.username;
 
-        // Verify the requester is a Developer
         const admin = await User.findOne({ username: adminUsername });
         if (!admin || admin.role !== 'Developer') {
-            return res.status(403).json({ success: false, message: "Unauthorized: Developer role required" });
+            return res.status(403).json({ success: false, message: "Unauthorized" });
         }
 
-        // Prevent developers from deleting themselves via this specific UI action if desired,
-        // but here we allow it or you can add: if(adminUsername === targetUsername) ...
-
-        // Delete the user
         await User.deleteOne({ username: targetUsername });
-        
-        // Optional: Delete all messages sent by this user
         await Message.deleteMany({ user: targetUsername });
 
-        res.json({ success: true, message: `Account ${targetUsername} deleted successfully` });
+        res.json({ success: true, message: "User deleted" });
     } catch (error) {
-        res.status(500).json({ success: false, message: "Server error during deletion" });
+        res.status(500).json({ success: false });
+    }
+});
+
+/**
+ * ADMIN API: CLEAR ALL DATA (/clear command)
+ * Permanently deletes all users and all messages.
+ */
+app.post('/api/admin/clear-all', async (req, res) => {
+    try {
+        const { adminUsername } = req.body;
+
+        const admin = await User.findOne({ username: adminUsername });
+        if (!admin || admin.role !== 'Developer') {
+            return res.status(403).json({ success: false, message: "Only Developers can use /clear" });
+        }
+
+        // Wipe collections
+        await User.deleteMany({});
+        await Message.deleteMany({});
+
+        res.json({ success: true, message: "All data cleared successfully. System reset." });
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Server error during clear" });
     }
 });
 
@@ -152,7 +168,6 @@ app.post('/api/messages', async (req, res) => {
         const { user, text, time } = req.body;
         const newMessage = new Message({ user, text, time });
         await newMessage.save();
-        // Update user activity whenever they send a message
         await User.updateOne({ username: user }, { lastSeen: new Date() });
         res.json(newMessage);
     } catch (err) {
@@ -162,7 +177,6 @@ app.post('/api/messages', async (req, res) => {
 
 /**
  * USER DIRECTORY API
- * Shows online/offline status based on lastSeen activity
  */
 app.get('/api/users', async (req, res) => {
     try {
@@ -182,11 +196,6 @@ app.get('/api/users', async (req, res) => {
     }
 });
 
-/**
- * SPA ROUTING
- * Serves the login page if the user is not authenticated 
- * (Handled primarily by client-side logic, but we provide the file)
- */
 app.get('/login', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
@@ -195,9 +204,6 @@ app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-/**
- * SERVER START
- */
 app.listen(PORT, () => {
     console.log(`Chat Server active on port ${PORT}`);
 });
