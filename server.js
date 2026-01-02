@@ -93,6 +93,36 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 /**
+ * ADMIN API: DELETE USER
+ * Only allows a user with the 'Developer' role to delete an account.
+ */
+app.delete('/api/admin/users/:username', async (req, res) => {
+    try {
+        const { adminUsername } = req.query; // Sender of the request
+        const targetUsername = req.params.username;
+
+        // Verify the requester is a Developer
+        const admin = await User.findOne({ username: adminUsername });
+        if (!admin || admin.role !== 'Developer') {
+            return res.status(403).json({ success: false, message: "Unauthorized: Developer role required" });
+        }
+
+        // Prevent developers from deleting themselves via this specific UI action if desired,
+        // but here we allow it or you can add: if(adminUsername === targetUsername) ...
+
+        // Delete the user
+        await User.deleteOne({ username: targetUsername });
+        
+        // Optional: Delete all messages sent by this user
+        await Message.deleteMany({ user: targetUsername });
+
+        res.json({ success: true, message: `Account ${targetUsername} deleted successfully` });
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Server error during deletion" });
+    }
+});
+
+/**
  * HEARTBEAT API
  */
 app.post('/api/heartbeat', async (req, res) => {
