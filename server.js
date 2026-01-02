@@ -1,42 +1,38 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const path = require('path');
-const app = express();
+const cors = require('cors');
+require('dotenv').config();
 
-// Use the port provided by the environment (e.g., Render) or default to 3000
+const app = express();
 const PORT = process.env.PORT || 3000;
 
-/**
- * Middleware
- */
+// Middleware
+app.use(cors());
 app.use(express.json());
-// Serve static files (HTML, CSS, JS) from the root directory
-app.use(express.static(path.join(__dirname)));
 
-/**
- * API Routes (Foundations for Bongdoo-style logic)
- */
-app.get('/api/health', (req, res) => {
-    res.status(200).json({ status: 'online', system: 'Phantom Tunnel Active' });
+// Serve static files from the 'local' folder as requested
+// This is where your index.html and profile.png will reside
+app.use(express.static(path.join(__dirname, 'local')));
+
+// MongoDB Connection
+// Using the provided environment key: MONGODB_URI
+const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://hayden:123password123@cluster0.57lnswh.mongodb.net/vikvok_live?retryWrites=true&w=majority";
+
+mongoose.connect(MONGODB_URI)
+  .then(() => console.log('✅ Connected to MongoDB Atlas'))
+  .catch((err) => console.error('❌ MongoDB Connection Error:', err));
+
+// Basic API Route example for the app
+app.get('/api/status', (req, res) => {
+  res.json({ message: "Server is running", database: "connected" });
 });
 
-/**
- * Frontend Routing
- * This ensures that if you refresh the page on a specific route, 
- * it always serves the index.html so the client-side logic can take over.
- */
+// Fallback to serve the HTML file for any non-API routes (Single Page App support)
 app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+  res.sendFile(path.join(__dirname, 'local', 'index.html'));
 });
 
-/**
- * Start Server
- */
 app.listen(PORT, () => {
-    console.log(`
-    -------------------------------------------
-    PHANTOM MESSENGER LIVE
-    Tunneling on port: ${PORT}
-    Mode: Production/Bongdoo-Ready
-    -------------------------------------------
-    `);
+  console.log(`🚀 Server live at http://localhost:${PORT}`);
 });
