@@ -3,246 +3,152 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Theme Menu</title>
+    <title>ChatApp - Themes</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
-        
-        #preview-window, #preview-header, #preview-sidebar, .msg-bubble, #logo-circle, #save-btn {
+        .theme-card {
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .theme-item {
             cursor: pointer;
-            transition: all 0.2s;
         }
-        .theme-item:hover {
-            background: rgba(255, 255, 255, 0.05);
+        .theme-card:hover {
+            transform: translateY(-4px);
         }
-        .theme-item.active {
-            background: rgba(255, 255, 255, 0.1);
-            border-left: 4px solid currentColor;
+        .theme-card.active {
+            border-color: #6366f1;
+            background: rgba(99, 102, 241, 0.1);
         }
-        
-        .save-notification {
-            animation: slideUp 0.3s ease forwards, fadeOut 0.3s ease 2s forwards;
-        }
-        
-        @keyframes slideUp {
-            from { transform: translateY(100%); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-        @keyframes fadeOut {
-            to { opacity: 0; visibility: hidden; }
+        .preview-bubble {
+            transition: background-color 0.3s ease;
         }
     </style>
 </head>
-<body class="bg-black text-white h-screen overflow-hidden flex flex-col font-sans">
+<body class="bg-slate-950 text-slate-200 min-h-screen font-sans">
 
-    <!-- TOP PROFILE HEADER -->
-    <header class="h-16 bg-zinc-900 border-b border-zinc-800 px-6 flex items-center justify-between z-10">
-        <div class="flex items-center gap-3">
-            <div class="relative">
-                <div id="user-pfp" class="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-lg border-2 border-zinc-700 overflow-hidden">
-                    <span id="pfp-initial">?</span>
-                </div>
-                <div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-zinc-900 rounded-full"></div>
-            </div>
+    <div class="max-w-4xl mx-auto p-6 md:p-12">
+        <div class="flex items-center justify-between mb-12">
             <div>
-                <p id="top-username" class="font-bold text-sm leading-none text-zinc-100">Loading...</p>
-                <p id="top-role" class="text-[10px] text-zinc-500 uppercase tracking-wider">User Account</p>
+                <h1 class="text-3xl font-black italic tracking-tight text-white mb-2 uppercase">Custom Themes</h1>
+                <p class="text-slate-400 text-sm">Personalize your chat experience with custom accent colors.</p>
             </div>
+            <a href="/index.html" class="bg-slate-900 border border-slate-800 px-5 py-2.5 rounded-xl text-xs font-bold hover:bg-slate-800 transition">
+                Back to Home
+            </a>
         </div>
-        
-        <div class="flex items-center gap-4">
-            <a href="/" class="text-xs font-bold text-zinc-500 hover:text-white transition uppercase tracking-widest mr-4">Back to Chat</a>
-            <div class="hidden md:block text-right mr-2">
-                <p class="text-[10px] text-zinc-500 uppercase font-bold">Selected Style</p>
-                <p id="active-theme-name" class="text-xs font-medium text-indigo-400">Default</p>
-            </div>
-            <button onclick="saveTheme()" id="save-btn" class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2 rounded-full text-sm font-bold transition shadow-lg active:scale-95">
-                Save Theme
-            </button>
-        </div>
-    </header>
 
-    <div class="flex flex-grow overflow-hidden">
-        <!-- THEME SIDEBAR -->
-        <aside class="w-80 bg-zinc-900/50 border-r border-zinc-800 flex flex-col">
-            <div class="p-4 border-b border-zinc-800 flex justify-between items-center bg-zinc-900/80">
-                <h2 class="font-bold text-xs uppercase tracking-widest text-zinc-500">Theme Library</h2>
-                <span id="theme-count" class="text-[10px] bg-zinc-800 px-2 py-1 rounded text-zinc-400">100 Styles</span>
-            </div>
-            <div id="theme-list" class="flex-grow overflow-y-auto custom-scrollbar">
-                <!-- Themes injected here -->
-            </div>
-        </aside>
-
-        <!-- PREVIEW AREA -->
-        <main id="preview-window" class="flex-grow flex flex-col bg-slate-900 relative">
-            
-            <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.03]">
-                <h1 class="text-9xl font-black uppercase tracking-tighter">PREVIEW</h1>
-            </div>
-
-            <!-- Mock App Header -->
-            <header id="preview-header" class="bg-slate-800 border-b border-white/10 p-4 flex justify-between items-center shadow-lg">
-                <div class="flex items-center gap-3">
-                    <div id="logo-circle" class="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center font-bold text-xl text-white">V</div>
-                    <div>
-                        <h2 class="font-bold text-lg leading-none">Live Lobby</h2>
-                        <span class="text-xs text-green-400">Live Preview</span>
-                    </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+            <!-- Left: Selection -->
+            <div class="space-y-4">
+                <h3 class="text-xs font-black uppercase tracking-widest text-slate-500 mb-4">Choose Accent</h3>
+                <div id="theme-grid" class="grid grid-cols-2 gap-3">
+                    <!-- Themes injected here -->
                 </div>
-            </header>
+            </div>
 
-            <div class="flex flex-grow overflow-hidden">
-                <!-- Mock Sidebar -->
-                <aside id="preview-sidebar" class="w-64 bg-slate-800/50 border-r border-white/5 flex flex-col p-4 space-y-4">
-                    <div class="h-3 w-20 bg-white/5 rounded"></div>
-                    <div class="space-y-3">
-                        <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-green-500"></div><div class="h-2 w-24 bg-white/10 rounded"></div></div>
-                        <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-green-500"></div><div class="h-2 w-32 bg-white/10 rounded"></div></div>
-                    </div>
-                </aside>
-
-                <!-- Mock Chat Content -->
-                <div class="flex-grow p-6 space-y-6 flex flex-col">
-                    <div class="flex flex-col items-start opacity-40">
-                        <div class="bg-white/5 p-4 rounded-2xl rounded-tl-none max-w-sm border border-white/5">
-                            <p class="text-sm">Welcome to the theme customizer!</p>
+            <!-- Right: Live Preview -->
+            <div class="bg-slate-900/50 border border-slate-800 rounded-3xl p-6 flex flex-col h-[400px]">
+                <h3 class="text-xs font-black uppercase tracking-widest text-slate-500 mb-6">Live Preview</h3>
+                
+                <div class="flex-1 space-y-4 overflow-hidden">
+                    <div class="flex items-start gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-[10px] font-bold">JD</div>
+                        <div class="bg-slate-800 p-3 rounded-2xl rounded-tl-none max-w-[80%] shadow-md">
+                            <p class="text-xs">Hey! Check out this new theme I'm using.</p>
                         </div>
                     </div>
 
-                    <div class="flex flex-col items-end">
-                        <div id="msg-accent" class="bg-indigo-600 p-4 rounded-2xl rounded-tr-none max-w-sm shadow-xl">
-                            <p class="text-sm font-medium">This is how your sent messages will look.</p>
+                    <div class="flex flex-col items-end gap-1">
+                        <div id="preview-accent-bubble" class="bg-indigo-600 text-white p-3 rounded-2xl rounded-tr-none max-w-[80%] shadow-md preview-bubble">
+                            <p class="text-xs">Looks sick! I'm switching mine right now.</p>
                         </div>
-                        <span class="text-[10px] opacity-40 mt-1 mr-1">Sample Message</span>
                     </div>
 
-                    <div class="flex-grow"></div>
-                    
-                    <div class="p-4 bg-white/5 rounded-xl border border-white/10 text-center">
-                        <p class="text-xs text-zinc-400">Click "Save Theme" to apply these colors to your main chat.</p>
+                    <div class="flex items-start gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-[10px] font-bold">JD</div>
+                        <div class="bg-slate-800 p-3 rounded-2xl rounded-tl-none max-w-[80%] shadow-md">
+                            <p class="text-xs">The accent colors update everywhere instantly.</p>
+                        </div>
                     </div>
                 </div>
+
+                <div class="mt-6 pt-6 border-t border-slate-800">
+                    <button onclick="saveTheme()" id="save-btn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black py-4 rounded-2xl transition shadow-lg shadow-indigo-500/20 uppercase text-xs tracking-widest">
+                        Apply Changes
+                    </button>
+                </div>
             </div>
-        </main>
+        </div>
     </div>
 
-    <!-- Notification Toast -->
-    <div id="toast-container" class="fixed bottom-6 right-6 z-50 pointer-events-none"></div>
-
     <script>
-        let currentUser = null;
-        let selectedTheme = null;
-
-        const themeBase = [
-            { name: "Midnight", bg: "slate-900", header: "slate-800", accent: "indigo-600" },
-            { name: "Nordic", bg: "zinc-900", header: "zinc-800", accent: "sky-500" },
-            { name: "Dracula", bg: "neutral-950", header: "neutral-900", accent: "purple-600" },
-            { name: "Forest", bg: "emerald-950", header: "emerald-900", accent: "lime-500" },
-            { name: "Deep Sea", bg: "blue-950", header: "blue-900", accent: "cyan-500" },
-            { name: "Volcano", bg: "red-950", header: "red-900", accent: "orange-600" },
-            { name: "Golden", bg: "stone-950", header: "stone-900", accent: "amber-500" },
-            { name: "Rose", bg: "rose-950", header: "rose-900", accent: "pink-500" },
-            { name: "Terminal", bg: "black", header: "zinc-900", accent: "green-500" },
-            { name: "Royal", bg: "violet-950", header: "violet-900", accent: "fuchsia-600" }
+        const themes = [
+            { name: 'Default', hex: '#4f46e5', class: 'indigo' },
+            { name: 'Crimson', hex: '#e11d48', class: 'rose' },
+            { name: 'Emerald', hex: '#10b981', class: 'emerald' },
+            { name: 'Amber', hex: '#f59e0b', class: 'amber' },
+            { name: 'Violet', hex: '#7c3aed', class: 'violet' },
+            { name: 'Sky', hex: '#0ea5e9', class: 'sky' },
+            { name: 'Hot Pink', hex: '#db2777', class: 'pink' },
+            { name: 'Slate', hex: '#475569', class: 'slate' }
         ];
 
-        const tailwindColors = ['slate', 'gray', 'zinc', 'neutral', 'stone', 'red', 'orange', 'amber', 'yellow', 'lime', 'green', 'emerald', 'teal', 'cyan', 'sky', 'blue', 'indigo', 'violet', 'purple', 'fuchsia', 'pink', 'rose'];
+        let selectedHex = '#4f46e5';
 
         window.onload = () => {
-            const savedUser = localStorage.getItem('chat_user');
-            if (savedUser) {
-                currentUser = JSON.parse(savedUser);
-                document.getElementById('top-username').innerText = currentUser.username;
-                document.getElementById('top-role').innerText = currentUser.role || 'Member';
-                document.getElementById('pfp-initial').innerText = currentUser.username.charAt(0).toUpperCase();
-            } else {
-                document.getElementById('top-username').innerText = "Guest User";
+            const saved = localStorage.getItem('user_theme');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    selectedHex = parsed.accent;
+                } catch(e) {}
             }
-            generateThemes();
+            renderThemes();
+            updatePreview();
         };
 
-        function applyTheme(theme) {
-            selectedTheme = theme;
-            const win = document.getElementById('preview-window');
-            const head = document.getElementById('preview-header');
-            const side = document.getElementById('preview-sidebar');
-            const msg = document.getElementById('msg-accent');
-            const logo = document.getElementById('logo-circle');
-            const saveBtn = document.getElementById('save-btn');
-            const activeName = document.getElementById('active-theme-name');
+        function renderThemes() {
+            const grid = document.getElementById('theme-grid');
+            grid.innerHTML = themes.map(t => `
+                <div onclick="selectTheme('${t.hex}')" 
+                     class="theme-card bg-slate-900 border-2 ${selectedHex === t.hex ? 'border-indigo-500 bg-indigo-500/5' : 'border-slate-800'} p-4 rounded-2xl flex items-center gap-3">
+                    <div class="w-6 h-6 rounded-full shadow-inner" style="background-color: ${t.hex}"></div>
+                    <span class="text-xs font-bold text-white">${t.name}</span>
+                </div>
+            `).join('');
+        }
 
-            // Update Preview UI
-            win.className = `flex-grow flex flex-col bg-${theme.bg} relative`;
-            head.className = `bg-${theme.header} border-b border-white/10 p-4 flex justify-between items-center shadow-lg`;
-            side.className = `w-64 bg-${theme.header}/50 border-r border-white/5 flex flex-col p-4 space-y-4`;
-            msg.className = `bg-${theme.accent} p-4 rounded-2xl rounded-tr-none max-w-sm shadow-xl`;
-            logo.className = `w-10 h-10 bg-${theme.accent} rounded-full flex items-center justify-center font-bold text-xl text-white shadow-inner`;
+        function selectTheme(hex) {
+            selectedHex = hex;
+            renderThemes();
+            updatePreview();
+        }
+
+        function updatePreview() {
+            const preview = document.getElementById('preview-accent-bubble');
+            const saveBtn = document.getElementById('save-btn');
             
-            // Update Menu UI
-            saveBtn.className = `bg-${theme.accent} hover:opacity-90 text-white px-6 py-2 rounded-full text-sm font-bold transition shadow-lg active:scale-95`;
-            activeName.innerText = theme.name;
-            activeName.className = `text-xs font-medium text-${theme.accent.split('-')[0]}-400`;
+            preview.style.backgroundColor = selectedHex;
+            saveBtn.style.backgroundColor = selectedHex;
             
-            // Highlight active in list
-            document.querySelectorAll('.theme-item').forEach(el => {
-                el.classList.remove('active');
-                if(el.dataset.name === theme.name) el.classList.add('active');
-            });
+            // Adjust button hover effect slightly with inline style if needed
+            saveBtn.onmouseover = () => saveBtn.style.opacity = "0.9";
+            saveBtn.onmouseout = () => saveBtn.style.opacity = "1";
         }
 
         function saveTheme() {
-            if (!selectedTheme) return;
-            localStorage.setItem('user_theme', JSON.stringify(selectedTheme));
+            const themeData = {
+                accent: selectedHex,
+                timestamp: Date.now()
+            };
+            localStorage.setItem('user_theme', JSON.stringify(themeData));
             
-            const toast = document.createElement('div');
-            toast.className = `save-notification bg-${selectedTheme.accent} text-white px-6 py-3 rounded-xl shadow-2xl font-bold flex items-center gap-3`;
-            toast.innerHTML = `<span>Theme "${selectedTheme.name}" Saved!</span>`;
-            
-            const container = document.getElementById('toast-container');
-            container.appendChild(toast);
-            setTimeout(() => toast.remove(), 2500);
-        }
-
-        function generateThemes() {
-            const list = document.getElementById('theme-list');
-            let themes = [...themeBase];
-
-            for (let i = 0; i < 90; i++) {
-                const c1 = tailwindColors[Math.floor(Math.random() * tailwindColors.length)];
-                const c2 = tailwindColors[Math.floor(Math.random() * tailwindColors.length)];
-                themes.push({
-                    name: `${c1.charAt(0).toUpperCase() + c1.slice(1)} ${i + 1}`,
-                    bg: `${c1}-950`,
-                    header: `${c1}-900`,
-                    accent: `${c2}-600`
-                });
-            }
-
-            list.innerHTML = themes.map(t => `
-                <div class="theme-item p-4 border-b border-zinc-800 flex items-center justify-between group" 
-                     data-name="${t.name}"
-                     onclick='applyTheme(${JSON.stringify(t)})'>
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-xl bg-${t.bg} border border-white/10 flex items-center justify-center">
-                            <div class="w-3 h-3 rounded-full bg-${t.accent}"></div>
-                        </div>
-                        <div>
-                            <p class="text-sm font-semibold text-zinc-200">${t.name}</p>
-                            <p class="text-[10px] text-zinc-500 font-mono">${t.bg} / ${t.accent}</p>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-
-            const current = localStorage.getItem('user_theme');
-            applyTheme(current ? JSON.parse(current) : themes[0]);
+            // Visual feedback
+            const btn = document.getElementById('save-btn');
+            const originalText = btn.innerText;
+            btn.innerText = "Applied!";
+            setTimeout(() => {
+                btn.innerText = originalText;
+                window.location.href = '/index.html';
+            }, 800);
         }
     </script>
 </body>
