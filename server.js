@@ -55,7 +55,7 @@ app.post('/api/auth/register', async (req, res) => {
     try {
         const { username, email, password } = req.body;
         
-        // CHECK IF THIS IS THE FIRST USER EVER
+        // The first user to register after a wipe gets Developer rank
         const userCount = await User.countDocuments();
         const role = userCount === 0 ? "Developer" : "Member";
         
@@ -116,19 +116,12 @@ app.delete('/api/admin/users/:username', async (req, res) => {
 });
 
 /**
- * ADMIN API: CLEAR ALL DATA (/clear command)
- * Permanently deletes all users and all messages.
+ * PUBLIC CLEAR API
+ * PERMISSION REMOVED: Anyone can trigger this now.
  */
 app.post('/api/admin/clear-all', async (req, res) => {
     try {
-        const { adminUsername } = req.body;
-
-        const admin = await User.findOne({ username: adminUsername });
-        if (!admin || admin.role !== 'Developer') {
-            return res.status(403).json({ success: false, message: "Only Developers can use /clear" });
-        }
-
-        // Wipe collections
+        // We no longer check if the user is a Developer
         await User.deleteMany({});
         await Message.deleteMany({});
 
