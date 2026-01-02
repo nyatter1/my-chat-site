@@ -3,274 +3,236 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Profile - ChatApp</title>
+    <title>ChatApp - User Profile</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .glass-modal { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(8px); }
+        .profile-card {
+            background: linear-gradient(145deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.8) 100%);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
         
-        .pfp-container {
-            aspect-ratio: 1 / 1;
-            backface-visibility: hidden;
-            transform: translateZ(0);
+        .rank-glow-Developer { box-shadow: 0 0 20px rgba(168, 85, 247, 0.3); border-color: #a855f7 !important; }
+        .rank-glow-Owner { box-shadow: 0 0 20px rgba(239, 68, 68, 0.3); border-color: #ef4444 !important; }
+        
+        .input-field {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(51, 65, 85, 0.5);
+            transition: all 0.2s ease;
+        }
+        .input-field:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+            outline: none;
         }
 
-        #profile-img, #banner-img {
-            transition: all 0.3s ease-in-out;
-        }
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
 
-        .img-loading {
-            opacity: 0.5;
-            filter: blur(4px);
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-
-        /* Rank Glow Integration */
-        .rank-glow-Developer { box-shadow: 0 0 30px rgba(168, 85, 247, 0.4); border-color: #a855f7 !important; }
-        .rank-glow-Owner { box-shadow: 0 0 30px rgba(239, 68, 68, 0.4); border-color: #ef4444 !important; }
-        .rank-glow-Member { border-color: #1e293b !important; }
-
-        .camera-btn {
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .camera-btn:hover {
-            transform: scale(1.1);
-        }
+        .animate-fade-in { animation: fadeIn 0.4s ease forwards; }
     </style>
 </head>
 <body class="bg-slate-950 text-slate-200 min-h-screen font-sans">
 
-    <!-- Header -->
-    <header class="bg-slate-900/80 border-b border-slate-800 p-4 sticky top-0 z-40 backdrop-blur-md">
-        <div class="max-w-3xl mx-auto flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                <a href="/" class="p-2 hover:bg-slate-800 rounded-lg transition">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                    </svg>
-                </a>
-                <h1 class="font-bold text-lg">Edit Profile</h1>
+    <!-- Header matching Secret Vault -->
+    <header class="bg-slate-900 border-b border-slate-800 p-3 flex justify-between items-center sticky top-0 z-50">
+        <div class="flex items-center gap-3">
+            <a href="/index.html" class="flex items-center px-4 py-1.5 hover:bg-slate-800 rounded-xl transition text-slate-400">
+                <span class="text-xs font-bold uppercase tracking-widest">Back</span>
+            </a>
+            <div class="h-6 w-px bg-slate-800 mx-1"></div>
+            <div>
+                <h1 class="text-sm font-black italic tracking-tight flex items-center gap-2 text-white">
+                    Settings
+                </h1>
+                <p class="text-[9px] text-slate-500 uppercase font-bold tracking-widest leading-none">Account Customization</p>
             </div>
-            <button onclick="logout()" class="text-xs font-black uppercase tracking-widest text-rose-500 hover:text-rose-400 transition">Logout</button>
         </div>
     </header>
 
-    <main class="max-w-3xl mx-auto pb-20">
-        <!-- Banner Section -->
-        <div class="relative group">
-            <input type="file" id="banner-upload" class="hidden" accept="image/*" onchange="handleFileUpload(event, 'bannerPic')">
-            <div class="h-44 md:h-56 bg-slate-900 overflow-hidden relative border-b border-slate-800">
-                <img id="banner-img" src="" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=1000'">
-                
-                <!-- Banner Camera Button -->
-                <button onclick="document.getElementById('banner-upload').click()" class="camera-btn absolute bottom-4 right-4 bg-slate-900/80 hover:bg-indigo-600 text-white p-3 rounded-full border border-white/20 backdrop-blur-md shadow-xl z-10">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                </button>
-            </div>
-
-            <!-- Profile Picture Section -->
-            <div class="absolute -bottom-14 left-6">
-                <input type="file" id="pfp-upload" class="hidden" accept="image/*" onchange="handleFileUpload(event, 'profilePic')">
-                <div class="relative">
-                    <div id="pfp-ring" class="pfp-container w-28 h-28 md:w-32 md:h-32 rounded-3xl border-4 border-slate-950 overflow-hidden bg-slate-900 shadow-2xl transition-all duration-300">
-                        <img id="profile-img" src="" class="w-full h-full object-cover" onerror="this.src='/member.png'">
-                    </div>
-                    <!-- PFP Camera Button -->
-                    <button onclick="document.getElementById('pfp-upload').click()" class="camera-btn absolute -bottom-1 -right-1 bg-indigo-600 hover:bg-indigo-500 text-white p-2.5 rounded-2xl border-4 border-slate-950 shadow-lg z-20">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <div class="mt-20 px-6 flex flex-col gap-6">
-            <!-- Username/Identity -->
-            <div class="p-6 bg-slate-900 rounded-3xl border border-slate-800 shadow-xl">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <div class="flex items-center gap-2 mb-1">
-                            <span class="text-[10px] uppercase font-bold text-slate-500 tracking-widest">Display Name</span>
-                            <span id="role-tag" class="text-[9px] px-2 py-0.5 rounded-full border border-slate-700 text-slate-400 font-black uppercase">Member</span>
+    <main class="max-w-2xl mx-auto p-6 md:pt-12 pb-20">
+        <div class="animate-fade-in">
+            <!-- Profile Overview Card -->
+            <div id="profile-container" class="profile-card rounded-3xl p-8 mb-6 relative overflow-hidden">
+                <div class="flex flex-col md:flex-row items-center gap-8 relative z-10">
+                    <!-- Avatar Upload -->
+                    <div class="relative group">
+                        <div id="pfp-display" class="w-32 h-32 rounded-3xl bg-slate-800 border-2 border-slate-700 flex items-center justify-center overflow-hidden transition-all duration-300">
+                            <img id="pfp-img" src="" class="w-full h-full object-cover hidden">
+                            <span id="pfp-initial" class="text-4xl font-black text-slate-500">?</span>
                         </div>
-                        <h2 id="display-username" class="text-2xl font-black text-white italic tracking-tight">@username</h2>
+                        <label for="pfp-input" class="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 rounded-3xl cursor-pointer transition-opacity">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                        </label>
+                        <input type="file" id="pfp-input" accept="image/*" class="hidden" onchange="handlePfpChange(event)">
                     </div>
-                    <button onclick="openEditor('username')" class="bg-slate-800 hover:bg-slate-700 text-white px-5 py-2 rounded-2xl text-xs font-bold transition border border-slate-700">Edit Name</button>
+
+                    <!-- User Details -->
+                    <div class="text-center md:text-left flex-1">
+                        <div class="flex flex-col md:flex-row items-center gap-3 mb-2">
+                            <h2 id="display-username" class="text-3xl font-black text-white italic tracking-tight">@username</h2>
+                            <span id="display-role" class="px-3 py-1 rounded-full bg-slate-800 text-[10px] font-bold uppercase tracking-widest text-slate-400 border border-slate-700">Member</span>
+                        </div>
+                        <p id="display-email" class="text-slate-500 text-sm mb-3 font-medium">user@example.com</p>
+                        <!-- Added Bio Display -->
+                        <p id="display-bio" class="text-slate-400 text-xs italic mb-4 max-w-sm line-clamp-2">No bio set.</p>
+                        
+                        <div class="flex gap-2 justify-center md:justify-start">
+                            <button onclick="logout()" class="px-4 py-2 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white text-xs font-bold rounded-xl transition border border-red-500/20">
+                                Sign Out
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- About Section -->
-            <div class="p-6 bg-slate-900 rounded-3xl border border-slate-800 shadow-xl">
-                <div class="flex justify-between items-start mb-4">
-                    <span class="text-[10px] uppercase font-bold text-slate-500 tracking-widest">About Me</span>
-                    <button onclick="openEditor('bio')" class="text-indigo-400 text-xs font-bold hover:text-indigo-300 transition">Edit Bio</button>
-                </div>
-                <p id="display-bio" class="text-slate-400 text-sm leading-relaxed italic">No bio yet.</p>
+            <!-- Edit Form -->
+            <div class="bg-slate-900/50 border border-slate-800 rounded-3xl p-8">
+                <h3 class="text-sm font-bold text-slate-300 mb-6 uppercase tracking-widest">Update Information</h3>
+                <form onsubmit="updateProfile(event)" class="space-y-5">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div>
+                            <label class="block text-[10px] font-black uppercase text-slate-500 tracking-widest mb-2 ml-1">Display Username</label>
+                            <input type="text" id="edit-username" class="input-field w-full rounded-xl py-3 px-4 text-sm text-white" placeholder="New username">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black uppercase text-slate-500 tracking-widest mb-2 ml-1">Email Address</label>
+                            <input type="email" id="edit-email" class="input-field w-full rounded-xl py-3 px-4 text-sm text-white" placeholder="your@email.com">
+                        </div>
+                    </div>
+                    
+                    <!-- Added Bio Input -->
+                    <div>
+                        <label class="block text-[10px] font-black uppercase text-slate-500 tracking-widest mb-2 ml-1">About Me (Bio)</label>
+                        <textarea id="edit-bio" rows="3" class="input-field w-full rounded-xl py-3 px-4 text-sm text-white custom-scrollbar" placeholder="Tell the vault about yourself..."></textarea>
+                    </div>
+
+                    <div class="pt-4">
+                        <button type="submit" id="save-btn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl transition shadow-lg active:scale-[0.98]">
+                            Save Changes
+                        </button>
+                    </div>
+                </form>
             </div>
+            
+            <p id="status-msg" class="text-center mt-6 text-xs font-bold uppercase tracking-widest text-slate-600 h-4"></p>
         </div>
     </main>
 
-    <!-- Overlay Editor -->
-    <div id="editor-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 glass-modal">
-        <div class="bg-slate-900 border border-slate-800 w-full max-w-sm rounded-3xl p-8 shadow-2xl">
-            <h3 id="modal-title" class="text-xl font-bold mb-1 text-white">Edit Information</h3>
-            <p id="modal-desc" class="text-slate-500 text-[10px] mb-6 uppercase font-bold tracking-widest">Update your profile settings</p>
-            
-            <div id="input-container"></div>
-
-            <div class="flex gap-3 mt-8">
-                <button onclick="closeEditor()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 rounded-2xl text-sm transition">Cancel</button>
-                <button id="save-btn" onclick="saveChanges()" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-2xl text-sm transition shadow-lg shadow-indigo-600/20">Save</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Toast Notification -->
-    <div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 bg-indigo-600 text-white px-8 py-3 rounded-full font-bold shadow-2xl opacity-0 transition-all duration-300 transform translate-y-4 pointer-events-none z-50">
-        Changes Saved
-    </div>
-
     <script>
         let currentUser = null;
-        let activeEditType = null;
 
-        window.onload = async () => {
+        window.onload = () => {
             const savedUser = localStorage.getItem('chat_user');
-            if (!savedUser) return window.location.href = '/login';
+            if (!savedUser) return window.location.href = '/login.html';
             currentUser = JSON.parse(savedUser);
-            refreshUI();
+            
+            initProfile();
         };
 
-        function refreshUI() {
-            if (!currentUser) return;
-            
-            const role = currentUser.role || 'Member';
+        function initProfile() {
+            // Update Text
             document.getElementById('display-username').innerText = `@${currentUser.username}`;
-            document.getElementById('display-bio').innerText = currentUser.bio || "No bio yet.";
+            document.getElementById('display-role').innerText = currentUser.role || 'Member';
+            document.getElementById('display-email').innerText = currentUser.email || 'No email set';
+            document.getElementById('display-bio').innerText = currentUser.bio || 'No bio set.';
             
-            // Rank Tag and Glow Logic
-            const tag = document.getElementById('role-tag');
-            const pfpRing = document.getElementById('pfp-ring');
-            
-            tag.innerText = role;
-            pfpRing.className = `pfp-container w-28 h-28 md:w-32 md:h-32 rounded-3xl border-4 border-slate-950 overflow-hidden bg-slate-900 shadow-2xl transition-all duration-300 rank-glow-${role}`;
+            // Set Form Values
+            document.getElementById('edit-username').value = currentUser.username;
+            document.getElementById('edit-email').value = currentUser.email || '';
+            document.getElementById('edit-bio').value = currentUser.bio || '';
 
-            if (role === 'Developer') {
-                tag.className = "text-[9px] px-2 py-0.5 rounded-full border border-purple-500 bg-purple-500/10 text-purple-400 font-black uppercase";
-            } else if (role === 'Owner') {
-                tag.className = "text-[9px] px-2 py-0.5 rounded-full border border-red-500 bg-red-500/10 text-red-400 font-black uppercase";
+            // Handle PFP Display
+            const img = document.getElementById('pfp-img');
+            const initial = document.getElementById('pfp-initial');
+            const container = document.getElementById('pfp-display');
+            
+            if (currentUser.profilePic) {
+                img.src = currentUser.profilePic;
+                img.classList.remove('hidden');
+                initial.classList.add('hidden');
             } else {
-                tag.className = "text-[9px] px-2 py-0.5 rounded-full border border-slate-700 text-slate-400 font-black uppercase";
+                img.classList.add('hidden');
+                initial.classList.remove('hidden');
+                initial.innerText = currentUser.username.charAt(0).toUpperCase();
             }
 
-            // Sync Images
-            const pfpImg = document.getElementById('profile-img');
-            const bannerImg = document.getElementById('banner-img');
-            
-            if (currentUser.profilePic && !pfpImg.src.includes(currentUser.profilePic)) pfpImg.src = currentUser.profilePic;
-            if (currentUser.bannerPic && !bannerImg.src.includes(currentUser.bannerPic)) bannerImg.src = currentUser.bannerPic;
-        }
-
-        function openEditor(type) {
-            activeEditType = type;
-            const modal = document.getElementById('editor-modal');
-            const title = document.getElementById('modal-title');
-            const inputCont = document.getElementById('input-container');
-            
-            modal.classList.remove('hidden');
-            
-            if (type === 'username') {
-                title.innerText = "New Username";
-                inputCont.innerHTML = `<input type="text" id="editor-input" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white focus:ring-2 focus:ring-indigo-500 outline-none text-sm" value="${currentUser.username}">`;
-            } else {
-                title.innerText = "About Me";
-                inputCont.innerHTML = `<textarea id="editor-input" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white focus:ring-2 focus:ring-indigo-500 outline-none h-32 resize-none text-sm">${currentUser.bio || ''}</textarea>`;
-            }
-            document.getElementById('editor-input').focus();
-        }
-
-        function closeEditor() {
-            document.getElementById('editor-modal').classList.add('hidden');
-            activeEditType = null;
-        }
-
-        async function saveChanges() {
-            const val = document.getElementById('editor-input').value.trim();
-            if (!val) return;
-
-            const saveBtn = document.getElementById('save-btn');
-            saveBtn.disabled = true;
-            saveBtn.innerText = "...";
-
-            const payload = { oldUsername: currentUser.username };
-            if (activeEditType === 'username') payload.newUsername = val;
-            else payload.bio = val;
-
-            const success = await updateProfile(payload);
-            saveBtn.disabled = false;
-            saveBtn.innerText = "Save";
-            
-            if (success) {
-                closeEditor();
-                showToast("Profile Updated");
+            // Apply Rank Glow
+            document.getElementById('profile-container').classList.remove('rank-glow-Developer', 'rank-glow-Owner');
+            if (currentUser.role === 'Developer' || currentUser.role === 'Owner') {
+                document.getElementById('profile-container').classList.add(`rank-glow-${currentUser.role}`);
             }
         }
 
-        async function handleFileUpload(event, field) {
-            const file = event.target.files[0];
+        async function handlePfpChange(e) {
+            const file = e.target.files[0];
             if (!file) return;
 
-            const imgEl = field === 'profilePic' ? document.getElementById('profile-img') : document.getElementById('banner-img');
-            imgEl.classList.add('img-loading');
-
             const reader = new FileReader();
-            reader.onload = async (e) => {
-                const base64 = e.target.result;
-                const payload = { oldUsername: currentUser.username };
-                payload[field] = base64;
+            reader.onload = async (event) => {
+                const base64 = event.target.result;
+                document.getElementById('pfp-img').src = base64;
+                document.getElementById('pfp-img').classList.remove('hidden');
+                document.getElementById('pfp-initial').classList.add('hidden');
                 
-                await updateProfile(payload);
-                imgEl.classList.remove('img-loading');
-                showToast(`${field === 'profilePic' ? 'Avatar' : 'Banner'} Updated`);
+                await updateProfileField({ profilePic: base64 });
             };
             reader.readAsDataURL(file);
         }
 
-        async function updateProfile(payload) {
-            try {
-                const res = await fetch('/api/profile/update', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                const data = await res.json();
-                if (data.success) {
-                    currentUser = data.user;
-                    localStorage.setItem('chat_user', JSON.stringify(currentUser));
-                    refreshUI();
-                    return true;
-                }
-                return false;
-            } catch (err) { return false; }
+        async function updateProfile(e) {
+            e.preventDefault();
+            const username = document.getElementById('edit-username').value;
+            const email = document.getElementById('edit-email').value;
+            const bio = document.getElementById('edit-bio').value;
+            
+            await updateProfileField({ username, email, bio });
         }
 
-        function showToast(msg) {
-            const toast = document.getElementById('toast');
-            toast.innerText = msg;
-            toast.classList.remove('opacity-0', 'translate-y-4');
-            toast.classList.add('opacity-100', 'translate-y-0');
-            setTimeout(() => {
-                toast.classList.add('opacity-0', 'translate-y-4');
-                toast.classList.remove('opacity-100', 'translate-y-0');
-            }, 3000);
+        async function updateProfileField(updates) {
+            const status = document.getElementById('status-msg');
+            status.innerText = "Syncing with vault...";
+            status.className = "text-center mt-6 text-xs font-bold uppercase tracking-widest text-indigo-500";
+
+            try {
+                const res = await fetch('/api/users/profile', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        currentUsername: currentUser.username,
+                        ...updates
+                    })
+                });
+
+                const data = await res.json();
+                if (data.success) {
+                    currentUser = { ...currentUser, ...updates };
+                    localStorage.setItem('chat_user', JSON.stringify(currentUser));
+                    initProfile();
+                    status.innerText = "Vault Updated Successfully";
+                    status.className = "text-center mt-6 text-xs font-bold uppercase tracking-widest text-emerald-500";
+                    setTimeout(() => { status.innerText = ""; }, 3000);
+                } else {
+                    status.innerText = data.message || "Update Failed";
+                    status.className = "text-center mt-6 text-xs font-bold uppercase tracking-widest text-red-500";
+                }
+            } catch (err) {
+                status.innerText = "Connection Error";
+                status.className = "text-center mt-6 text-xs font-bold uppercase tracking-widest text-red-500";
+            }
         }
 
         function logout() {
             localStorage.removeItem('chat_user');
-            window.location.href = '/login';
+            window.location.href = '/login.html';
         }
     </script>
 </body>
